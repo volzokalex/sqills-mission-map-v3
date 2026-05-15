@@ -8,7 +8,7 @@
   'use strict';
 
   /* ---------- Constants ---------- */
-  const STORAGE_KEY = 'missionMap.missions';
+  const STORAGE_KEY = 'missionMap.v3.missions';
   const PRESS_NAV_DELAY_MS = 280;
   const ISLAND_PITCH = 230;          // vertical distance between island centers (px)
   const ISLAND_TOP_OFFSET = 24;      // top padding inside the map (px)
@@ -929,8 +929,8 @@
   /* ---------- Editor toggles: hide titles / hide connections ----------
      State persists in localStorage so a reload keeps the chosen view. */
   const TOGGLE_KEYS = {
-    hideTitles:      'missionMap.hideTitles',
-    hideConnections: 'missionMap.hideConnections'
+    hideTitles:      'missionMap.v3.hideTitles',
+    hideConnections: 'missionMap.v3.hideConnections'
   };
   const TOGGLE_CLASSES = {
     hideTitles:      'hide-titles',
