@@ -29,7 +29,8 @@
   };
   const SESSION_KEYS = {
     clickedId:       'missionMap.v3.session.clickedId',
-    lastCompletedId: 'missionMap.v3.session.lastCompletedId'
+    lastCompletedId: 'missionMap.v3.session.lastCompletedId',
+    scrollY:         'missionMap.v3.session.scrollY'
   };
   function sessionGet(key) {
     try { return sessionStorage.getItem(SESSION_KEYS[key]) || null; }
@@ -583,6 +584,9 @@
         // navigating away. On return (back from mission page) the algorithm
         // honours this until the mission flips to completed.
         sessionSet('clickedId', id);
+        // Remember the exact scroll so a back-from-mission-page visit can
+        // restore the same view instead of auto-scrolling.
+        try { sessionStorage.setItem(SESSION_KEYS.scrollY, String(window.scrollY)); } catch {}
         const target = `https://volzokalex.github.io/shai-mission-page-v3/#mission-${encodeURIComponent(id)}`;
         console.log('[mission-map] navigating →', target);
         window.location.href = target;
@@ -608,17 +612,25 @@
   }
 
   /* ---------- Auto-scroll to last-interacted ----------
-     Place the last-interacted island just below the sticky header. If no
-     mission qualifies (e.g., plan is fully completed) — no scroll. */
+     Centres the focused station in the visible area below the sticky header.
+     Exception: for the first two missions the centred position rounds to 0
+     anyway — make that explicit so the user lands at the top of the map. */
   function scrollToCurrent() {
     const current = islandsEl.querySelector('.island.is-last-interacted');
     if (!current) return;
+    const idx = Number(current.dataset.index);
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     requestAnimationFrame(() => {
-      const headerEl = document.querySelector('.app-header');
-      const headerH = headerEl ? headerEl.getBoundingClientRect().height : 0;
-      const buffer = 16;
-      const targetTop = current.getBoundingClientRect().top + window.scrollY - headerH - buffer;
+      let targetTop;
+      if (idx < 2) {
+        targetTop = 0;
+      } else {
+        const headerEl = document.querySelector('.app-header');
+        const headerH = headerEl ? headerEl.getBoundingClientRect().height : 0;
+        const rect = current.getBoundingClientRect();
+        const stationCentreAbsY = rect.top + window.scrollY + rect.height / 2;
+        targetTop = stationCentreAbsY - headerH - (window.innerHeight - headerH) / 2;
+      }
       window.scrollTo({
         top: Math.max(0, targetTop),
         behavior: prefersReducedMotion ? 'auto' : 'smooth'
@@ -1223,7 +1235,24 @@
   renderEditor();
   renderMap();
   const initial = (location.hash || '').replace('#', '');
-  activateTab(['map', 'editor'].includes(initial) ? initial : 'map');
+  const targetTab = ['map', 'editor'].includes(initial) ? initial : 'map';
+  // If the user is coming back from the mission page, restore the exact
+  // scroll position they left from. Otherwise let activateTab run its
+  // normal centring/top auto-scroll.
+  const savedScrollY = sessionStorage.getItem(SESSION_KEYS.scrollY);
+  if (savedScrollY !== null) {
+    try { sessionStorage.removeItem(SESSION_KEYS.scrollY); } catch {}
+    activateTab(targetTab, { scrollCurrent: false });
+    // Wait two frames so renderMap's height is committed before we scroll —
+    // otherwise the target Y can be clamped if document hasn't laid out yet.
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        window.scrollTo({ top: Number(savedScrollY), behavior: 'auto' });
+      });
+    });
+  } else {
+    activateTab(targetTab);
+  }
   // Re-crop any islands stored before auto-crop (or after it was briefly disabled).
   migrateLegacyImages();
 })();

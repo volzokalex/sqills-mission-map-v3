@@ -434,6 +434,17 @@ input { font: inherit; color: inherit; }
   .island.is-not-started:hover .island-placeholder {
     filter: none;
   }
+  /* Glow priority — when the focused station is the plan-start exception
+     (is-not-started + is-last-interacted), the hover preview must NOT
+     swallow the amber bloom. Re-apply the glow filter on hover so both
+     coexist. */
+  .island.is-last-interacted:hover img,
+  .island.is-last-interacted:hover .island-placeholder {
+    filter:
+      drop-shadow(0 0 19px rgba(255, 168, 60, 0.68))
+      drop-shadow(0 0 11px rgba(255, 122, 26, 0.48))
+      drop-shadow(0 7px 13px rgba(255, 122, 26, 0.26));
+  }
 }
 /* Locked — the final mission of the plan. Dimmed colour stays warm so it
    doesn't read as broken, but it's clearly inactive. */
