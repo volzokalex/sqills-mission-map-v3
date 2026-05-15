@@ -419,9 +419,9 @@ input { font: inherit; color: inherit; }
    overlays glow + levitation on top of any persistent state. */
 .island.is-not-started img,
 .island.is-not-started .island-placeholder {
-  /* Colour is preserved, just faded — half-saturated and slightly translucent
-     so untouched stations recede without going monochrome. */
-  filter: saturate(0.5) opacity(0.78);
+  /* Colour preserved but muted — half-saturated and slightly less bright so
+     untouched stations look washed-out, not transparent. */
+  filter: saturate(0.45) brightness(0.92);
 }
 /* Locked — the final mission of the plan. Dimmed colour stays warm so it
    doesn't read as broken, but it's clearly inactive. */
