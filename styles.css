@@ -279,10 +279,14 @@ input { font: inherit; color: inherit; }
   box-shadow: none;
   opacity: 1;
 }
-/* Gold trail — outgoing segments from a completed mission. */
+/* Gold trail — outgoing segments from a completed mission. Stacked
+   amber glow makes the lit path obvious against the cream canvas. */
 .trail-dot--gold {
   background: #F5A623;
-  box-shadow: 0 0 4px rgba(245, 166, 35, 0.45);
+  box-shadow:
+    0 0 6px rgba(255, 178, 60, 0.85),
+    0 0 14px rgba(255, 122, 26, 0.55),
+    0 0 22px rgba(255, 122, 26, 0.28);
   opacity: 1;
 }
 
