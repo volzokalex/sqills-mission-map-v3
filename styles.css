@@ -263,19 +263,19 @@ input { font: inherit; color: inherit; }
   z-index: 1;
   pointer-events: none;
 }
-/* Trail — thin dark dashed line built from short rotated segments. */
+/* Trail — warm-grey dashed line built from short rotated segments. */
 .trail-dot {
   position: absolute;
-  width: 8px;
-  height: 1.5px;
-  background: rgba(24, 19, 12, 0.50);
-  border-radius: 1px;
+  width: 10px;
+  height: 3px;
+  background: #C8C0AE;
+  border-radius: 1.5px;
   transform: translate(-50%, -50%) rotate(var(--rot, 0deg));
   pointer-events: none;
 }
 .trail-dot--solid,
 .trail-dot--dashed {
-  background: rgba(24, 19, 12, 0.50);
+  background: #C8C0AE;
   box-shadow: none;
   opacity: 1;
 }
@@ -365,9 +365,9 @@ input { font: inherit; color: inherit; }
 }
 /* Side trail — same look, smaller cubes (4×2). */
 .trail-dot--side {
-  width: 4px;
-  height: 1px;
-  border-radius: 0.5px;
+  width: 5px;
+  height: 2px;
+  border-radius: 1px;
 }
 .island {
   position: relative;
