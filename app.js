@@ -345,9 +345,9 @@
 
       // Label + progress in the top-most overlay (sits above any overlap).
       const islandH      = isLast ? ISLAND_SIZE * LAST_SCALE : ISLAND_SIZE;
-      const labelOffset  = isLast ? 12 : 20;
+      const labelOffset  = isLast ? 0 : 8;
       const labelY       = y + islandH + labelOffset;
-      const progY        = labelY + 24;
+      const progY        = labelY + 20;
       if (m.title) {
         labelsHtml +=
           `<li class="island-label" style="left:${x}%; top:${labelY}px">` +

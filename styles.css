@@ -484,28 +484,31 @@ input { font: inherit; color: inherit; }
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.45));
 }
 
-/* Island label — pill bubble under the station (v1 style). */
+/* Island label — bare dark text under the station, no bubble. */
 .island-label {
   position: absolute;
   left: 50%;
-  top: calc(100% + 16px);
+  top: calc(100% + 8px);
   transform: translate(-50%, -50%);
   font-size: 13px;
   font-weight: 600;
   line-height: 1.2;
   color: var(--text-primary);
-  background: rgba(255, 247, 230, 0.92);
-  padding: 4px 12px;
-  border-radius: 12px;
-  border: 1px solid var(--border-subtle);
-  box-shadow: 0 2px 6px rgba(24, 19, 12, 0.08);
+  background: none;
+  padding: 0;
+  border: 0;
+  box-shadow: none;
+  /* Soft cream halo for legibility on cloudy/varied backgrounds. */
+  text-shadow:
+    0 0 6px rgba(255, 247, 230, 0.9),
+    0 0 14px rgba(255, 247, 230, 0.6);
   width: max-content;
   max-width: 180px;
   text-align: center;
   white-space: normal;
 }
 .island-slot--last .island-label {
-  top: calc(100% + 8px);
+  top: calc(100% + 2px);
 }
 
 /* Progress bar under the label — fixed width, fills with amber gradient. */
