@@ -289,20 +289,24 @@
   // as last-interacted, regardless of which other missions are done.
   function isLockedIndex(i) { return i === missions.length - 1; }
 
-  // Resolves which IN-PROGRESS mission carries the "last interacted" focus
-  // (the glow + levitation accent). A station only qualifies once the user
-  // has completed at least one lesson there (progress > 0). Clicking and
-  // returning without progress no longer changes state.
+  // Resolves which mission carries the "last interacted" focus (glow +
+  // levitation). Default rule: the user must have started a lesson there
+  // (progress > 0). Plan-start exception: while no mission has any progress
+  // AND none are completed, the first non-locked mission gets the focus —
+  // a "this is where you begin" cue that survives session resets.
   //
-  //   1) sessionStorage.clickedId, if its mission is in-progress (0 < p < 100).
+  //   1) sessionStorage.clickedId, if its mission is in-progress.
   //   2) else first in-progress AFTER sessionStorage.lastCompletedId.
   //   3) else first in-progress from start.
-  //   4) else null — nothing glows.
+  //   4) else (plan-start exception) the first non-locked mission, but
+  //      only while nothing is completed and nothing is in progress.
+  //   5) else null — nothing glows.
   function computeLastInteractedId() {
     if (!missions.length) return null;
+    const isCompleted = (m) => m.state === 'completed' || (Number(m.progress) || 0) >= 100;
     const isInProgress = (m, idx) => {
       if (isLockedIndex(idx)) return false;
-      if (m.state === 'completed') return false;
+      if (isCompleted(m)) return false;
       const p = Number(m.progress) || 0;
       return p > 0 && p < 100;
     };
@@ -322,6 +326,14 @@
     }
     for (let i = 0; i < missions.length; i++) {
       if (isInProgress(missions[i], i)) return missions[i].id;
+    }
+    // Plan-start exception — fresh plan, nothing touched yet.
+    const anyCompleted = missions.some(isCompleted);
+    const anyInProgress = missions.some((m, i) => isInProgress(m, i));
+    if (!anyCompleted && !anyInProgress) {
+      for (let i = 0; i < missions.length; i++) {
+        if (!isLockedIndex(i)) return missions[i].id;
+      }
     }
     return null;
   }
@@ -404,10 +416,12 @@
       const locked          = isLockedIndex(i);
       const completed       = !locked && (m.state === 'completed' || progressNum >= 100);
       const inProgress      = !locked && !completed && progressNum > 0;
-      // Glow + levitation only when the station is the "current focus" AND
-      // actually in progress — clicks without lesson progress don't qualify.
-      const isLastInter     = inProgress && m.id === lastInteractedId;
-      const useLiveArt      = !locked && (completed || inProgress);
+      // The glow goes to whichever mission computeLastInteractedId picked —
+      // that's either an in-progress focus or the plan-start exception
+      // (first mission, fresh plan). Both cases get live art + glow; only
+      // the in-progress branch also gets the progress bar.
+      const isLastInter     = !locked && !completed && m.id === lastInteractedId;
+      const useLiveArt      = !locked && (completed || inProgress || isLastInter);
       const showProgressBar = inProgress;
 
       let baseClass;
