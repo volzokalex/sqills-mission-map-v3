@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=v3h">
+  <link rel="stylesheet" href="styles.css?v=v3i">
 </head>
 <body>
   <div class="identity-band" aria-hidden="true"></div>
@@ -162,12 +162,12 @@
 
       <div class="editor-toggles">
         <label class="toggle">
-          <input type="checkbox" id="toggleHideTitles">
-          <span>Hide Titles</span>
+          <input type="checkbox" id="toggleTitles">
+          <span>Titles</span>
         </label>
         <label class="toggle">
-          <input type="checkbox" id="toggleHideConnections">
-          <span>Hide Connections</span>
+          <input type="checkbox" id="toggleConnections">
+          <span>Connections</span>
         </label>
       </div>
 
@@ -175,12 +175,13 @@
 
       <div class="editor-actions">
         <button class="btn-ghost" id="exportJson" type="button">Export JSON</button>
+        <button class="btn-ghost" id="resetStates" type="button">Reset mission states</button>
         <button class="btn-ghost" id="resetAll" type="button">Reset all islands</button>
       </div>
     </div>
   </section>
 
-  <script src="sample-data.js?v=v3h"></script>
-  <script src="app.js?v=v3h"></script>
+  <script src="sample-data.js?v=v3i"></script>
+  <script src="app.js?v=v3i"></script>
 </body>
 </html>

@@ -279,6 +279,12 @@ input { font: inherit; color: inherit; }
   box-shadow: none;
   opacity: 1;
 }
+/* Gold trail — outgoing segments from a completed mission. */
+.trail-dot--gold {
+  background: #F5A623;
+  box-shadow: 0 0 4px rgba(245, 166, 35, 0.45);
+  opacity: 1;
+}
 
 .islands {
   position: relative;
@@ -405,34 +411,49 @@ input { font: inherit; color: inherit; }
   box-shadow: 0 14px 24px rgba(176, 80, 8, 0.32);
 }
 
-/* State filters */
-.island.state-done img,
-.island.state-done .island-placeholder {
-  /* Slightly grey, less saturated — read as "уже пройдено". */
-  filter: saturate(0.45) brightness(0.92) contrast(0.95);
-}
-.island.state-current img,
-.island.state-current .island-placeholder {
-  /* Stronger amber bloom — three stacked drop-shadows for soft glow halo. */
-  filter:
-    drop-shadow(0 0 12px rgba(255, 168, 60, 0.45))
-    drop-shadow(0 0  6px rgba(255, 122, 26, 0.30))
-    drop-shadow(0 4px 8px rgba(255, 122, 26, 0.16));
-}
-.island.state-current { transform: scale(1.07); }
-.island.state-available img,
-.island.state-available .island-placeholder {
+/* State filters — new 4-state model.
+   Persistent states (is-not-started, is-in-progress, is-completed) keep the
+   art clean; the silhouette/live distinction is decided in JS by swapping
+   image SRC, not by filtering. The .is-last-interacted modifier overlays
+   glow + levitation on top of any persistent state. */
+.island.is-not-started img,
+.island.is-not-started .island-placeholder,
+.island.is-in-progress img,
+.island.is-in-progress .island-placeholder,
+.island.is-completed img,
+.island.is-completed .island-placeholder,
+.island.is-last-interacted-fresh img,
+.island.is-last-interacted-fresh .island-placeholder {
   filter: none;
 }
-.island.state-locked img,
-.island.state-locked .island-placeholder {
-  /* Locked — colour preserved but muted; reads dimmer than active but not grey. */
-  filter: grayscale(0.30) brightness(0.78) saturate(0.65) contrast(0.96);
+
+/* Last-interacted — amber glow ≈30% larger than the old current-state bloom,
+   plus a slow vertical levitation. Applied independently of the persistent
+   state, so an in-progress + last-interacted mission gets both the bar and
+   the glow/levitation. */
+.island.is-last-interacted img,
+.island.is-last-interacted .island-placeholder {
+  filter:
+    drop-shadow(0 0 16px rgba(255, 168, 60, 0.58))
+    drop-shadow(0 0  9px rgba(255, 122, 26, 0.40))
+    drop-shadow(0 6px 11px rgba(255, 122, 26, 0.22));
+}
+.island.is-last-interacted {
+  transform: scale(1.07);
+  animation: island-levitate 2600ms ease-in-out infinite alternate;
+}
+
+@keyframes island-levitate {
+  from { transform: scale(1.07) translateY(0); }
+  to   { transform: scale(1.07) translateY(-5px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .island.is-last-interacted { animation: none; }
 }
 
 /* Press feedback — must be visible BEFORE navigation */
-.island.pressed { transform: scale(0.92); }
-.island.state-current.pressed { transform: scale(1.0); }
+.island.pressed { transform: scale(0.92); animation: none; }
+.island.is-last-interacted.pressed { transform: scale(1.0); animation: none; }
 .island.pressed img,
 .island.pressed .island-placeholder {
   filter: brightness(1.08) saturate(1.05);
@@ -534,25 +555,6 @@ input { font: inherit; color: inherit; }
   box-shadow: 0 0 6px rgba(255, 122, 26, 0.45);
   transition: width 260ms cubic-bezier(.2, .7, .2, 1);
 }
-/* When progress hits 100, the bar is replaced by a small pixel check. */
-.island-progress--done {
-  background: none;
-  border: 0;
-  border-radius: 0;
-  width: 20px;
-  height: 20px;
-  overflow: visible;
-}
-.island-check {
-  width: 100%;
-  height: 100%;
-  display: block;
-  color: var(--primary-500);
-  filter: drop-shadow(0 0 4px rgba(255, 122, 26, 0.55));
-  image-rendering: pixelated;
-  image-rendering: -webkit-optimize-contrast;
-}
-
 /* Empty state */
 .empty-state {
   position: relative;

@@ -16,7 +16,31 @@
   const ISLAND_X_AMPLITUDE = 18;     // zig-zag half-amplitude as %  (centered at 50%)
   const ALPHA_CROP_THRESHOLD = 8;    // alpha below this counts as transparent for auto-crop
   const MAX_PNG_SIDE = 512;          // resize cap before storing
-  const STATES = ['available', 'current', 'done', 'locked'];
+  // Persistent stored states are binary: not-started vs completed.
+  // "Last interacted" is a session-scoped flag (sessionStorage); "in progress"
+  // is derived from progress > 0 and < 100. Editor exposes all four labels
+  // as a friendly setter shortcut.
+  const STATES = ['not-started', 'last-interacted', 'in-progress', 'completed'];
+  const STATE_LABELS = {
+    'not-started':     'Not started',
+    'last-interacted': 'Last interacted',
+    'in-progress':     'In progress',
+    'completed':       'Completed'
+  };
+  const SESSION_KEYS = {
+    clickedId:       'missionMap.v3.session.clickedId',
+    lastCompletedId: 'missionMap.v3.session.lastCompletedId'
+  };
+  function sessionGet(key) {
+    try { return sessionStorage.getItem(SESSION_KEYS[key]) || null; }
+    catch { return null; }
+  }
+  function sessionSet(key, val) {
+    try {
+      if (val) sessionStorage.setItem(SESSION_KEYS[key], val);
+      else sessionStorage.removeItem(SESSION_KEYS[key]);
+    } catch {}
+  }
 
   /* ---------- Data layer ---------- */
   const Store = {
@@ -24,7 +48,21 @@
       try {
         const raw = localStorage.getItem(STORAGE_KEY);
         const arr = raw ? JSON.parse(raw) : [];
-        return Array.isArray(arr) ? arr : [];
+        if (!Array.isArray(arr)) return [];
+        // Migrate legacy state alphabet (available/current/done/locked) into
+        // the new binary {not-started, completed}. progress carries the rest.
+        return arr.map(m => {
+          const legacy = m.state;
+          let state = m.state;
+          let progress = Number(m.progress) || 0;
+          if (legacy === 'done' || legacy === 'completed' || progress >= 100) {
+            state = 'completed';
+            if (progress < 100) progress = 100;
+          } else if (state !== 'not-started') {
+            state = 'not-started';
+          }
+          return { ...m, state, progress };
+        });
       } catch {
         return [];
       }
@@ -233,7 +271,7 @@
   const progressCounter = document.getElementById('progressCounter');
   function renderHeader() {
     const total = missions.length;
-    const done = missions.filter(m => m.state === 'done').length;
+    const done = missions.filter(m => m.state === 'completed').length;
     progressCounter.textContent = `${done}/${total}`;
     const pct = total > 0 ? (done / total) * 100 : 0;
     progressFill.style.width = pct + '%';
@@ -245,6 +283,35 @@
   const trailEl = document.getElementById('trail');
   const mapEl = document.getElementById('map');
   const emptyStateEl = document.getElementById('emptyState');
+
+  // Resolves which mission carries the transient "last interacted" flag
+  // based on session storage + persistent state. See design notes:
+  //   1) sessionStorage.clickedId, if its mission is not completed.
+  //   2) else first not-completed AFTER sessionStorage.lastCompletedId.
+  //   3) else first not-completed from start (covers the "fresh session"
+  //      and "first time user opens the map" cases).
+  function computeLastInteractedId() {
+    if (!missions.length) return null;
+    const isCompleted = (m) => m.state === 'completed' || (Number(m.progress) || 0) >= 100;
+    const clickedId = sessionGet('clickedId');
+    if (clickedId) {
+      const m = missions.find(x => x.id === clickedId);
+      if (m && !isCompleted(m)) return clickedId;
+    }
+    const lastCompletedId = sessionGet('lastCompletedId');
+    if (lastCompletedId) {
+      const idx = missions.findIndex(x => x.id === lastCompletedId);
+      if (idx >= 0) {
+        for (let j = idx + 1; j < missions.length; j++) {
+          if (!isCompleted(missions[j])) return missions[j].id;
+        }
+      }
+    }
+    for (const m of missions) {
+      if (!isCompleted(m)) return m.id;
+    }
+    return null;
+  }
 
   function renderMap() {
     const count = missions.length;
@@ -263,18 +330,20 @@
     emptyStateEl.hidden = true;
     trailEl.style.display = '';
 
+    const lastInteractedId = computeLastInteractedId();
+    const isCompleted = (m) => m.state === 'completed' || (Number(m.progress) || 0) >= 100;
+
     // Trail dots — divs sampled along each pair's quadratic bezier. Each dot
     // gets a --rot var so its long axis aligns with the local tangent (the
     // "short faces" point at the next dot along the curve, like train ties).
+    // Segments whose SOURCE mission is completed turn gold; everything else
+    // stays warm-grey dashed.
     const DOTS_PER_SEGMENT = 14;
     const mapWidthPx = mapEl.getBoundingClientRect().width || 430;
     let trailHtml = '';
     for (let i = 0; i < count - 1; i++) {
       const a = missions[i];
-      const b = missions[i + 1];
-      const solid = (a.state === 'done' || a.state === 'current')
-        && (b.state === 'done' || b.state === 'current');
-      const cls = solid ? 'trail-dot--solid' : 'trail-dot--dashed';
+      const cls = isCompleted(a) ? 'trail-dot--gold' : 'trail-dot--dashed';
       const x1 = islandXPct(i, count);
       const y1 = islandY(i) + ISLAND_SIZE / 2;
       const x2 = islandXPct(i + 1, count);
@@ -307,7 +376,10 @@
     }
     // (Trail innerHTML is written AFTER side-trails are also appended below.)
 
-    // Islands
+    // Islands — derive the display state per mission from progress + the
+    // session-scoped last-interacted flag. Live art shows for any mission
+    // that's "touched" (in-progress, completed, or last-interacted); silhouette
+    // (imageDataDone) shows for untouched. Progress bar is independent.
     let html = '';
     let labelsHtml = '';
     missions.forEach((m, i) => {
@@ -315,17 +387,23 @@
       const y = islandY(i);
       const isLast = i === count - 1;
 
-      const badge = m.state === 'locked'
-        ? `<span class="island-badge--locked" aria-hidden="true">
-             <svg viewBox="0 0 24 24" fill="currentColor">
-               <path d="M6 10V8a6 6 0 0 1 12 0v2h1a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h1zm2 0h8V8a4 4 0 0 0-8 0v2z"/>
-             </svg>
-           </span>`
-        : '';
+      const progressNum     = Math.max(0, Math.min(100, Number(m.progress) || 0));
+      const completed       = m.state === 'completed' || progressNum >= 100;
+      const inProgress      = !completed && progressNum > 0;
+      const isLastInter     = !completed && m.id === lastInteractedId;
+      const useLiveArt      = completed || inProgress || isLastInter;
+      const showProgressBar = inProgress;
 
-      // Done state uses imageDataDone if uploaded; otherwise falls back to the
-      // regular image (still gets the desaturate filter from state-done CSS).
-      const imgSrc = (m.state === 'done' && m.imageDataDone) ? m.imageDataDone : m.imageData;
+      let baseClass;
+      if (completed)       baseClass = 'is-completed';
+      else if (inProgress) baseClass = 'is-in-progress';
+      else if (isLastInter) baseClass = 'is-last-interacted-fresh';
+      else                  baseClass = 'is-not-started';
+      const lastInterClass = isLastInter ? ' is-last-interacted' : '';
+
+      const imgSrc = useLiveArt
+        ? (m.imageData || m.imageDataDone)
+        : (m.imageDataDone || m.imageData);
       const visual = imgSrc
         ? `<img src="${imgSrc}" alt="${escapeHtml(m.title || 'Mission ' + (i + 1))}" draggable="false">`
         : `<div class="island-placeholder">${i + 1}</div>`;
@@ -333,12 +411,11 @@
       const slotCls = isLast ? 'island-slot island-slot--last' : 'island-slot';
       html += `
         <li class="${slotCls}" style="left:${x}%; top:${y}px;">
-          <button class="island state-${m.state}" type="button"
+          <button class="island ${baseClass}${lastInterClass}" type="button"
                   data-id="${m.id}" data-index="${i}"
-                  data-state="${m.state}"
+                  data-state="${baseClass.replace('is-', '')}"
                   aria-label="${escapeHtml(m.title || 'Mission ' + (i + 1))}">
             ${visual}
-            ${badge}
           </button>
         </li>
       `;
@@ -350,7 +427,9 @@
       const labelOffset = isLast ? 0 : 4;
       const infoY       = y + islandH + labelOffset;
       const wantLabel   = !!m.title;
-      const wantProg    = !!m.progressEnabled;
+      // Progress bar is shown only while the mission is "in progress" —
+      // never on not-started, last-interacted-fresh, or completed.
+      const wantProg    = !!m.progressEnabled && showProgressBar;
       if (wantLabel || wantProg) {
         let infoInner = '';
         if (wantLabel) {
@@ -358,21 +437,10 @@
             `<span class="island-label">` + escapeHtml(m.title) + `</span>`;
         }
         if (wantProg) {
-          const progressPct = Math.max(0, Math.min(100, Number(m.progress) || 0));
-          if (progressPct >= 100) {
-            infoInner +=
-              `<div class="island-progress island-progress--done">` +
-                `<svg class="island-check" viewBox="0 0 16 16">` +
-                  `<path d="M3 8 L7 12 L13 4" fill="none" stroke="currentColor" ` +
-                  `stroke-width="3" stroke-linecap="square" stroke-linejoin="miter"/>` +
-                `</svg>` +
-              `</div>`;
-          } else {
-            infoInner +=
-              `<div class="island-progress">` +
-                `<div class="island-progress__fill" style="--p:${progressPct}%"></div>` +
-              `</div>`;
-          }
+          infoInner +=
+            `<div class="island-progress">` +
+              `<div class="island-progress__fill" style="--p:${progressNum}%"></div>` +
+            `</div>`;
         }
         labelsHtml +=
           `<li class="island-info" style="left:${x}%; top:${infoY}px">` +
@@ -460,17 +528,14 @@
       let pressTimer = null;
 
       const finish = () => {
-        const state = el.dataset.state;
         const id = el.dataset.id;
         const index = Number(el.dataset.index);
         pressTimer = null;
         el.classList.remove('pressed');
-        if (state === 'locked') {
-          el.classList.add('shake');
-          setTimeout(() => el.classList.remove('shake'), 360);
-          console.log('[mission-map] locked island tapped:', { id, index });
-          return;
-        }
+        // Mark this mission as the in-session "last interacted" target before
+        // navigating away. On return (back from mission page) the algorithm
+        // honours this until the mission flips to completed.
+        sessionSet('clickedId', id);
         const target = `https://volzokalex.github.io/shai-mission-page-v3/#mission-${encodeURIComponent(id)}`;
         console.log('[mission-map] navigating →', target);
         window.location.href = target;
@@ -495,11 +560,11 @@
     });
   }
 
-  /* ---------- Auto-scroll to current ----------
-     Place the current island just below the sticky header, not centred in the
-     viewport — so the user lands at the top of the active composition. */
+  /* ---------- Auto-scroll to last-interacted ----------
+     Place the last-interacted island just below the sticky header. If no
+     mission qualifies (e.g., plan is fully completed) — no scroll. */
   function scrollToCurrent() {
-    const current = islandsEl.querySelector('.island.state-current');
+    const current = islandsEl.querySelector('.island.is-last-interacted');
     if (!current) return;
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     requestAnimationFrame(() => {
@@ -527,7 +592,10 @@
     const thumbDone = s.imageDataDone
       ? `<img src="${s.imageDataDone}" alt="" draggable="false">`
       : `<span class="mission-thumb__hint">done</span>`;
-    const stateOptions = STATES.map(st =>
+    // Side missions intentionally keep their legacy state alphabet — the
+    // 4-state model is a main-mission feature (sides are out of scope).
+    const SIDE_STATES = ['available', 'current', 'done', 'locked'];
+    const stateOptions = SIDE_STATES.map(st =>
       `<option value="${st}" ${st === s.state ? 'selected' : ''}>${st}</option>`
     ).join('');
     const sideToggle = (val) => `<option value="${val}" ${val === s.side ? 'selected' : ''}>${val}</option>`;
@@ -557,11 +625,21 @@
     `;
   }
 
+  // Derive the dropdown's displayed state from data + session flag.
+  function deriveEditorState(m, lastInteractedId) {
+    const p = Number(m.progress) || 0;
+    if (m.state === 'completed' || p >= 100) return 'completed';
+    if (m.id === lastInteractedId && p === 0) return 'last-interacted';
+    if (p > 0 && p < 100) return 'in-progress';
+    return 'not-started';
+  }
+
   function renderEditor() {
     if (missions.length === 0) {
       missionListEl.innerHTML = `<li class="editor-empty">No islands yet. Drop a PNG above to add your first mission.</li>`;
       return;
     }
+    const lastInteractedId = computeLastInteractedId();
     let html = '';
     missions.forEach((m, i) => {
       const thumbMain = m.imageData
@@ -570,8 +648,9 @@
       const thumbDone = m.imageDataDone
         ? `<img src="${m.imageDataDone}" alt="" draggable="false">`
         : `<span class="mission-thumb__hint">done</span>`;
+      const currentDerivedState = deriveEditorState(m, lastInteractedId);
       const stateOptions = STATES.map(s =>
-        `<option value="${s}" ${s === m.state ? 'selected' : ''}>${s}</option>`
+        `<option value="${s}" ${s === currentDerivedState ? 'selected' : ''}>${STATE_LABELS[s]}</option>`
       ).join('');
       const sides = Array.isArray(m.sides) ? m.sides : [];
       const sidesHtml = sides.map((s) => sideRowHtml(m.id, s)).join('');
@@ -670,11 +749,33 @@
       stateEl.addEventListener('change', () => {
         const m = missions.find(x => x.id === id);
         if (!m) return;
-        if (stateEl.value === 'current') {
-          // Only one mission may be current — demote any previous current.
-          missions.forEach(x => { if (x.id !== id && x.state === 'current') x.state = 'available'; });
+        // Map each friendly Editor option to data + session flag mutations.
+        // The render layer will derive everything else.
+        const choice = stateEl.value;
+        if (choice === 'not-started') {
+          m.state = 'not-started';
+          m.progress = 0;
+          if (sessionGet('clickedId') === id) sessionSet('clickedId', null);
+          if (sessionGet('lastCompletedId') === id) sessionSet('lastCompletedId', null);
+        } else if (choice === 'last-interacted') {
+          // Reset progress so render derives "last-interacted-fresh" (silhouette → live, no bar).
+          m.state = 'not-started';
+          m.progress = 0;
+          sessionSet('clickedId', id);
+          if (sessionGet('lastCompletedId') === id) sessionSet('lastCompletedId', null);
+        } else if (choice === 'in-progress') {
+          // Default to ~50% on entry; preserve any existing non-zero/non-100 value.
+          const p = Number(m.progress) || 0;
+          m.state = 'not-started';
+          m.progress = (p > 0 && p < 100) ? p : 50;
+          m.progressEnabled = true;
+          if (sessionGet('lastCompletedId') === id) sessionSet('lastCompletedId', null);
+        } else if (choice === 'completed') {
+          m.state = 'completed';
+          m.progress = 100;
+          sessionSet('lastCompletedId', id);
+          if (sessionGet('clickedId') === id) sessionSet('clickedId', null);
         }
-        m.state = stateEl.value;
         persist();
         renderEditor();
         renderMap();
@@ -695,24 +796,27 @@
         let v = Number(progValueEl.value);
         if (!Number.isFinite(v)) v = 0;
         v = Math.max(0, Math.min(100, Math.round(v)));
+        const prevState = m.state;
         m.progress = v;
-        // Progress drives state:
-        //   100  → done
-        //   <100 → current (active); demote any other current first
-        let stateChanged = false;
+        // Progress drives the persistent state: 100 → completed, else not-started.
+        // sessionStorage flags shift to reflect the transition.
         if (v >= 100) {
-          if (m.state !== 'done') { m.state = 'done'; stateChanged = true; }
-        } else {
-          if (m.state !== 'current') {
-            missions.forEach(x => {
-              if (x.id !== id && x.state === 'current') x.state = 'available';
-            });
-            m.state = 'current';
-            stateChanged = true;
+          if (m.state !== 'completed') {
+            m.state = 'completed';
+            sessionSet('lastCompletedId', id);
+            if (sessionGet('clickedId') === id) sessionSet('clickedId', null);
           }
+        } else {
+          if (m.state !== 'not-started') m.state = 'not-started';
         }
         persist();
-        if (stateChanged) renderEditor();
+        // Surgical UI update: refresh only the dropdown's selected option
+        // (keeps the user's focus + scroll position inside the input).
+        const sel = row.querySelector('.mission-state');
+        if (sel) {
+          const lastInteractedId = computeLastInteractedId();
+          sel.value = deriveEditorState(m, lastInteractedId);
+        }
         renderMap();
         renderHeader();
       });
@@ -926,34 +1030,41 @@
     });
   });
 
-  /* ---------- Editor toggles: hide titles / hide connections ----------
-     State persists in localStorage so a reload keeps the chosen view. */
+  /* ---------- Editor toggles: titles / connections ----------
+     Semantics flipped from the older Hide Titles/Hide Connections: a checked
+     box means the element is visible. New storage keys (.showTitles /
+     .showConnections) so we never inherit the legacy inverted preference. */
   const TOGGLE_KEYS = {
-    hideTitles:      'missionMap.v3.hideTitles',
-    hideConnections: 'missionMap.v3.hideConnections'
+    titles:      'missionMap.v3.showTitles',
+    connections: 'missionMap.v3.showConnections'
   };
   const TOGGLE_CLASSES = {
-    hideTitles:      'hide-titles',
-    hideConnections: 'hide-connections'
+    titles:      'hide-titles',
+    connections: 'hide-connections'
   };
   function applyToggle(key, on) {
-    document.body.classList.toggle(TOGGLE_CLASSES[key], on);
+    // CSS class is applied when the toggle is OFF (= hide that element).
+    document.body.classList.toggle(TOGGLE_CLASSES[key], !on);
     try { localStorage.setItem(TOGGLE_KEYS[key], on ? '1' : '0'); } catch {}
   }
   function readToggle(key) {
-    try { return localStorage.getItem(TOGGLE_KEYS[key]) === '1'; } catch { return false; }
+    try {
+      const raw = localStorage.getItem(TOGGLE_KEYS[key]);
+      if (raw === null) return true;            // default: visible
+      return raw === '1';
+    } catch { return true; }
   }
-  const hideTitlesEl      = document.getElementById('toggleHideTitles');
-  const hideConnectionsEl = document.getElementById('toggleHideConnections');
-  if (hideTitlesEl) {
-    hideTitlesEl.checked = readToggle('hideTitles');
-    applyToggle('hideTitles', hideTitlesEl.checked);
-    hideTitlesEl.addEventListener('change', () => applyToggle('hideTitles', hideTitlesEl.checked));
+  const titlesToggleEl      = document.getElementById('toggleTitles');
+  const connectionsToggleEl = document.getElementById('toggleConnections');
+  if (titlesToggleEl) {
+    titlesToggleEl.checked = readToggle('titles');
+    applyToggle('titles', titlesToggleEl.checked);
+    titlesToggleEl.addEventListener('change', () => applyToggle('titles', titlesToggleEl.checked));
   }
-  if (hideConnectionsEl) {
-    hideConnectionsEl.checked = readToggle('hideConnections');
-    applyToggle('hideConnections', hideConnectionsEl.checked);
-    hideConnectionsEl.addEventListener('change', () => applyToggle('hideConnections', hideConnectionsEl.checked));
+  if (connectionsToggleEl) {
+    connectionsToggleEl.checked = readToggle('connections');
+    applyToggle('connections', connectionsToggleEl.checked);
+    connectionsToggleEl.addEventListener('change', () => applyToggle('connections', connectionsToggleEl.checked));
   }
 
   resetAllBtn.addEventListener('click', () => {
@@ -961,9 +1072,29 @@
     if (!confirm('Delete all islands? This cannot be undone.')) return;
     missions = [];
     Store.clear();
+    sessionSet('clickedId', null);
+    sessionSet('lastCompletedId', null);
     renderEditor();
     renderMap();
     renderHeader();
+  });
+
+  // Quick-test helper: snap every mission back to "not-started" + clear
+  // session flags. The algorithm then surfaces mission 1 as last-interacted.
+  // Mission identity, art, and titles are preserved.
+  document.getElementById('resetStates')?.addEventListener('click', () => {
+    if (missions.length === 0) return;
+    missions.forEach(m => {
+      m.state = 'not-started';
+      m.progress = 0;
+    });
+    sessionSet('clickedId', null);
+    sessionSet('lastCompletedId', null);
+    persist();
+    renderEditor();
+    renderMap();
+    renderHeader();
+    scrollToCurrent();
   });
 
   // Export current roster as JSON — download a file with everything in
