@@ -301,20 +301,32 @@ input { font: inherit; color: inherit; }
   pointer-events: none;
   list-style: none;
 }
-.island-labels .island-progress {
-  position: absolute;
-  transform: translate(-50%, -50%);
-  top: auto;
-}
-/* Labels anchor by their TOP so multi-line titles always grow downward
-   and never overlap the station above them. */
-.island-labels .island-label {
+/* One info wrapper per mission — flex column places label + progress in
+   natural document flow so the gap is consistent regardless of title
+   wrapping. Inline left/top per item position the whole wrapper. */
+.island-labels .island-info {
   position: absolute;
   transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  pointer-events: none;
+}
+.island-labels .island-info .island-label {
+  position: relative;
+  left: auto;
   top: auto;
+  transform: none;
   width: auto;
   max-width: 180px;
   white-space: normal;
+}
+.island-labels .island-info .island-progress {
+  position: relative;
+  left: auto;
+  top: auto;
+  transform: none;
 }
 .island-slot {
   position: absolute;
@@ -501,11 +513,8 @@ input { font: inherit; color: inherit; }
   padding: 0;
   border: 0;
   box-shadow: none;
-  /* Cream halo for legibility on clouds, plus a soft dark drop below. */
-  text-shadow:
-    0 0 6px rgba(255, 247, 230, 0.9),
-    0 0 14px rgba(255, 247, 230, 0.6),
-    0 2px 4px rgba(24, 19, 12, 0.45);
+  /* Single soft drop shadow under each glyph. */
+  text-shadow: 0 2px 6px rgba(24, 19, 12, 0.70);
   width: max-content;
   max-width: 180px;
   text-align: center;
@@ -524,7 +533,7 @@ input { font: inherit; color: inherit; }
   width: 90px;
   height: 6px;
   background: rgba(255, 247, 230, 0.55);
-  border: 1px solid rgba(24, 19, 12, 0.75);
+  border: 1px solid rgba(120, 110, 100, 0.55);
   border-radius: 999px;
   box-sizing: border-box;
   overflow: hidden;

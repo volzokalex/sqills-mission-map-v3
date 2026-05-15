@@ -343,37 +343,41 @@
         </li>
       `;
 
-      // Label + progress in the top-most overlay (sits above any overlap).
-      // labelY = TOP edge of the label (transform is translateX only).
-      const islandH      = isLast ? ISLAND_SIZE * LAST_SCALE : ISLAND_SIZE;
-      const labelOffset  = isLast ? 0 : 4;
-      const labelY       = y + islandH + labelOffset;
-      // progY = CENTRE of the bar/check (translate(-50%, -50%)).
-      // Reserve room for the title (≈ 16 px single line, up to ~32 for 2 lines)
-      // plus a comfortable gap before the indicator.
-      const progY        = labelY + 40;
-      if (m.title) {
-        labelsHtml +=
-          `<li class="island-label" style="left:${x}%; top:${labelY}px">` +
-          escapeHtml(m.title) +
-          `</li>`;
-      }
-      if (m.progressEnabled) {
-        const progressPct = Math.max(0, Math.min(100, Number(m.progress) || 0));
-        if (progressPct >= 100) {
-          labelsHtml +=
-            `<li class="island-progress island-progress--done" style="left:${x}%; top:${progY}px">` +
-              `<svg class="island-check" viewBox="0 0 16 16">` +
-                `<path d="M3 8 L7 12 L13 4" fill="none" stroke="currentColor" ` +
-                `stroke-width="3" stroke-linecap="square" stroke-linejoin="miter"/>` +
-              `</svg>` +
-            `</li>`;
-        } else {
-          labelsHtml +=
-            `<li class="island-progress" style="left:${x}%; top:${progY}px">` +
-              `<div class="island-progress__fill" style="--p:${progressPct}%"></div>` +
-            `</li>`;
+      // Wrap label + progress in one flex column anchored just below the
+      // station — natural document flow keeps the gap consistent for both
+      // single- and two-line titles.
+      const islandH     = isLast ? ISLAND_SIZE * LAST_SCALE : ISLAND_SIZE;
+      const labelOffset = isLast ? 0 : 4;
+      const infoY       = y + islandH + labelOffset;
+      const wantLabel   = !!m.title;
+      const wantProg    = !!m.progressEnabled;
+      if (wantLabel || wantProg) {
+        let infoInner = '';
+        if (wantLabel) {
+          infoInner +=
+            `<span class="island-label">` + escapeHtml(m.title) + `</span>`;
         }
+        if (wantProg) {
+          const progressPct = Math.max(0, Math.min(100, Number(m.progress) || 0));
+          if (progressPct >= 100) {
+            infoInner +=
+              `<div class="island-progress island-progress--done">` +
+                `<svg class="island-check" viewBox="0 0 16 16">` +
+                  `<path d="M3 8 L7 12 L13 4" fill="none" stroke="currentColor" ` +
+                  `stroke-width="3" stroke-linecap="square" stroke-linejoin="miter"/>` +
+                `</svg>` +
+              `</div>`;
+          } else {
+            infoInner +=
+              `<div class="island-progress">` +
+                `<div class="island-progress__fill" style="--p:${progressPct}%"></div>` +
+              `</div>`;
+          }
+        }
+        labelsHtml +=
+          `<li class="island-info" style="left:${x}%; top:${infoY}px">` +
+          infoInner +
+          `</li>`;
       }
 
       // Side missions for this main — placed as smaller islands offset L/R,
