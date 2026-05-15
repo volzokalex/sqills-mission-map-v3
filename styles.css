@@ -423,6 +423,15 @@ input { font: inherit; color: inherit; }
      untouched stations look washed-out, not transparent. */
   filter: saturate(0.45) brightness(0.92);
 }
+/* Hover preview — pointing at a dormant station reveals full colour. The
+   200ms filter transition on .island img makes the swap smooth. Mobile
+   gets the same effect via the .pressed state during a tap. */
+@media (hover: hover) {
+  .island.is-not-started:hover img,
+  .island.is-not-started:hover .island-placeholder {
+    filter: none;
+  }
+}
 /* Locked — the final mission of the plan. Dimmed colour stays warm so it
    doesn't read as broken, but it's clearly inactive. */
 .island.is-locked img,
