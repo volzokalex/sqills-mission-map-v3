@@ -419,7 +419,9 @@ input { font: inherit; color: inherit; }
    overlays glow + levitation on top of any persistent state. */
 .island.is-not-started img,
 .island.is-not-started .island-placeholder {
-  filter: grayscale(0.78) brightness(0.82) saturate(0.55) contrast(0.92);
+  /* Colour is preserved, just faded — half-saturated and slightly translucent
+     so untouched stations recede without going monochrome. */
+  filter: saturate(0.5) opacity(0.78);
 }
 /* Locked — the final mission of the plan. Dimmed colour stays warm so it
    doesn't read as broken, but it's clearly inactive. */
@@ -436,33 +438,19 @@ input { font: inherit; color: inherit; }
   filter: none;
 }
 
-/* Last-interacted — soft amber halo painted BEHIND the station via a radial
-   ::before, plus a faint drop-shadow on the art itself for edge bloom. The
-   levitation runs ~20% faster than the original 2.6s cadence. */
+/* Last-interacted — silhouette-following amber bloom (drop-shadows on the
+   image rather than a radial halo behind it), bumped ~20% over the previous
+   current-state recipe. Levitation cadence runs ~20% faster than 2.6s. */
+.island.is-last-interacted img,
+.island.is-last-interacted .island-placeholder {
+  filter:
+    drop-shadow(0 0 19px rgba(255, 168, 60, 0.68))
+    drop-shadow(0 0 11px rgba(255, 122, 26, 0.48))
+    drop-shadow(0 7px 13px rgba(255, 122, 26, 0.26));
+}
 .island.is-last-interacted {
   transform: scale(1.07);
   animation: island-levitate 2080ms ease-in-out infinite alternate;
-  overflow: visible;
-}
-.island.is-last-interacted::before {
-  content: '';
-  position: absolute;
-  inset: -28%;
-  border-radius: 50%;
-  background:
-    radial-gradient(circle at 50% 55%,
-      rgba(255, 178, 78, 0.78) 0%,
-      rgba(255, 132, 28, 0.42) 32%,
-      rgba(255, 122, 26, 0.16) 58%,
-      transparent 72%);
-  pointer-events: none;
-  z-index: 0;
-}
-.island.is-last-interacted img,
-.island.is-last-interacted .island-placeholder {
-  position: relative;
-  z-index: 1;
-  filter: drop-shadow(0 4px 10px rgba(255, 122, 26, 0.32));
 }
 
 @keyframes island-levitate {
@@ -471,7 +459,6 @@ input { font: inherit; color: inherit; }
 }
 @media (prefers-reduced-motion: reduce) {
   .island.is-last-interacted { animation: none; }
-  .island.is-last-interacted::before { opacity: 0.6; }
 }
 
 /* Press feedback — must be visible BEFORE navigation */
