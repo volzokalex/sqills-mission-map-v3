@@ -344,10 +344,14 @@
       `;
 
       // Label + progress in the top-most overlay (sits above any overlap).
+      // labelY = TOP edge of the label (transform is translateX only).
       const islandH      = isLast ? ISLAND_SIZE * LAST_SCALE : ISLAND_SIZE;
-      const labelOffset  = isLast ? 0 : 8;
+      const labelOffset  = isLast ? 0 : 4;
       const labelY       = y + islandH + labelOffset;
-      const progY        = labelY + 20;
+      // progY = CENTRE of the bar/check (translate(-50%, -50%)).
+      // Reserve room for the title (≈ 16 px single line, up to ~32 for 2 lines)
+      // plus a comfortable gap before the indicator.
+      const progY        = labelY + 40;
       if (m.title) {
         labelsHtml +=
           `<li class="island-label" style="left:${x}%; top:${labelY}px">` +

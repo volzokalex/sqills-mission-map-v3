@@ -301,14 +301,17 @@ input { font: inherit; color: inherit; }
   pointer-events: none;
   list-style: none;
 }
-.island-labels .island-label,
 .island-labels .island-progress {
   position: absolute;
   transform: translate(-50%, -50%);
-  top: auto;        /* override .island-label's calc(100% + …) */
+  top: auto;
 }
-/* Wrap long titles to multiple lines like the old behaviour. */
+/* Labels anchor by their TOP so multi-line titles always grow downward
+   and never overlap the station above them. */
 .island-labels .island-label {
+  position: absolute;
+  transform: translateX(-50%);
+  top: auto;
   width: auto;
   max-width: 180px;
   white-space: normal;
@@ -498,10 +501,11 @@ input { font: inherit; color: inherit; }
   padding: 0;
   border: 0;
   box-shadow: none;
-  /* Soft cream halo for legibility on cloudy/varied backgrounds. */
+  /* Cream halo for legibility on clouds, plus a soft dark drop below. */
   text-shadow:
     0 0 6px rgba(255, 247, 230, 0.9),
-    0 0 14px rgba(255, 247, 230, 0.6);
+    0 0 14px rgba(255, 247, 230, 0.6),
+    0 2px 4px rgba(24, 19, 12, 0.45);
   width: max-content;
   max-width: 180px;
   text-align: center;
@@ -518,9 +522,11 @@ input { font: inherit; color: inherit; }
   top: calc(100% + 65px);
   transform: translateX(-50%);
   width: 90px;
-  height: 4px;
-  background: rgba(255, 247, 230, 0.22);
+  height: 6px;
+  background: rgba(255, 247, 230, 0.55);
+  border: 1px solid rgba(24, 19, 12, 0.75);
   border-radius: 999px;
+  box-sizing: border-box;
   overflow: hidden;
   pointer-events: none;
 }
@@ -539,6 +545,7 @@ input { font: inherit; color: inherit; }
 /* When progress hits 100, the bar is replaced by a small pixel check. */
 .island-progress--done {
   background: none;
+  border: 0;
   border-radius: 0;
   width: 20px;
   height: 20px;
