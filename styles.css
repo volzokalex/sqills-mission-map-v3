@@ -1,0 +1,954 @@
+/* ============================================================
+   Mission Map — Prototype styles
+   Mobile-first, max 430px centered. Warm Sqills palette.
+   ============================================================ */
+
+/* ---------- Tokens ---------- */
+:root {
+  /* Surfaces */
+  --canvas:         #F2EEE3;
+  --surface:        #FFFFFF;
+  --surface-subtle: #ECE6D6;
+  --surface-muted:  #E5DDC8;
+  --header-bg:      #FFFFFF;
+
+  /* Text */
+  --text-primary:   #18130C;
+  --text-body:      #3C342A;
+  --text-secondary: #6F6557;
+  --text-tertiary:  #98907F;
+  --text-inverse:   #FFF6E5;
+
+  /* Brand / amber ramp */
+  --primary-500:    #FF7A1A;
+  --primary-600:    #E65F00;
+  --primary-700:    #B94800;
+  --amber-light:    #FFC54D;
+  --amber-mid:      #FFA42A;
+  --amber-deep:     #FF7A1A;
+  --amber-bloom:    rgba(255, 122, 26, 0.35);
+
+  /* Borders & shadows */
+  --border-subtle:  rgba(24, 19, 12, 0.08);
+  --border-default: rgba(24, 19, 12, 0.16);
+  --shadow-stack:   0 2px 0 0 var(--surface-muted), 0 4px 8px rgba(40, 32, 22, 0.06);
+  --shadow-stack-pressed: 0 1px 0 0 var(--surface-muted);
+  --shadow-cta:     0 3px 0 0 var(--primary-700), 0 6px 16px rgba(255, 122, 26, 0.32);
+  --shadow-elev-md: 0 8px 24px rgba(24, 19, 12, 0.10), 0 2px 6px rgba(24, 19, 12, 0.06);
+
+  /* Sky / clouds */
+  --sky-top:        #F2EEE3;
+  --sky-mid:        #F2EEE3;
+  --sky-bottom:     #F2EEE3;
+  --cloud:          #FFF7E6;
+
+  /* Layout */
+  --max-width:      430px;
+  --pad-x:          16px;
+  --header-h:       148px; /* identity band 6 + pill row 64 + progress 22 + tabs 56 */
+  --island-pitch:   230px; /* vertical distance between island centers */
+  --island-size:    190px;
+}
+
+/* ---------- Reset ---------- */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html {
+  width: 100%;
+  min-height: 100%;
+  background: var(--canvas);          /* same as body — no side strips of any colour */
+}
+body {
+  /* App fills the entire viewport — width of screen IS width of app. */
+  width: 100%;
+  margin: 0;
+  position: relative;
+  min-height: 100dvh;
+  /* iOS 26+ safe-area: push content below the notch / Dynamic Island. */
+  padding-top: env(safe-area-inset-top);
+  background: var(--canvas);
+  color: var(--text-primary);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-size: 16px;
+  line-height: 1.4;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overflow-x: hidden;
+}
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+img { display: block; max-width: 100%; }
+ol, ul { list-style: none; }
+input { font: inherit; color: inherit; }
+
+/* ---------- Identity band (sits inside the app frame, not over viewport) ---------- */
+.identity-band {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 6px;
+  background: linear-gradient(90deg,
+    #2A1E13 0%, #553420 22%, #8C512B 44%,
+    #C9763C 66%, #F4A45A 84%, #FFD191 100%);
+  z-index: 20;
+}
+
+/* ---------- Header ---------- */
+.app-header {
+  position: sticky;
+  top: 0;
+  width: 100%;
+  background: var(--header-bg);
+  /* Extend header bg up into the iOS safe-area-inset-top zone so the notch
+     area is filled with header chrome (white) instead of revealing scrolled-
+     past map content during over-scroll bounces. */
+  padding: calc(6px + env(safe-area-inset-top)) var(--pad-x) 0;
+  margin-top: calc(-1 * env(safe-area-inset-top));
+  z-index: 15;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 0 12px;
+}
+.plan-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 18px;
+  background: var(--surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 999px;
+  color: var(--text-primary);
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  box-shadow: var(--shadow-stack);
+  transition: transform 90ms ease, box-shadow 90ms ease;
+}
+.plan-pill:active {
+  transform: translateY(1px);
+  box-shadow: var(--shadow-stack-pressed);
+}
+.plan-pill__title { white-space: nowrap; }
+.plan-pill__chevron { flex: 0 0 16px; color: var(--text-secondary); }
+
+.avatar {
+  flex: 0 0 44px;
+  height: 44px;
+  width: 44px;
+  border-radius: 50%;
+  background: var(--primary-600);
+  color: var(--text-inverse);
+  font-family: 'Manrope', sans-serif;
+  font-weight: 700;
+  font-size: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-stack);
+}
+
+.progress {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 12px;
+}
+.progress__track {
+  flex: 1;
+  height: 8px;
+  background: var(--surface-subtle);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.progress__fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg,
+    var(--amber-light) 0%, var(--amber-mid) 50%, var(--amber-deep) 100%);
+  border-radius: 999px;
+  box-shadow: 0 0 8px rgba(255, 122, 26, 0.45);
+  transition: width 260ms cubic-bezier(.2,.7,.2,1);
+}
+.progress__counter {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  min-width: 38px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.tabs {
+  display: flex;
+  gap: 4px;
+  padding-bottom: 4px;
+}
+.tab {
+  flex: 1;
+  padding: 12px 0 14px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  letter-spacing: 0.02em;
+  border-bottom: 2px solid transparent;
+  transition: color 120ms ease, border-color 120ms ease;
+}
+.tab[aria-selected="true"] {
+  color: var(--text-primary);
+  border-color: var(--primary-500);
+}
+
+/* ---------- Tab panels ---------- */
+.tab-panel {
+  width: 100%;
+  flex: 1;
+  position: relative;
+}
+.tab-panel[hidden] { display: none; }
+
+/* ---------- Map tab ---------- */
+.tab-panel--map { padding-bottom: 80px; }
+
+.parallax {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+.cloud-layer {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  /* Extra height so the upward translate doesn't expose a gap at bottom. */
+  height: 220%;
+  will-change: transform;
+  contain: paint;
+}
+
+.cloud {
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  width: var(--w, 220px);
+  height: auto;
+  display: block;
+  /* --tx may include scaleX(-1) flip + slight rotation for chaos. */
+  transform: translateX(-50%) var(--tx, scale(1));
+  pointer-events: none;
+}
+/* Per-cloud opacity comes from inline `--o`. */
+.cloud {
+  opacity: var(--o, 0.55);
+}
+
+.map {
+  position: relative;
+  z-index: 1;
+  padding-top: 0;
+  min-height: 100dvh;
+}
+.trail {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  pointer-events: none;
+}
+/* Trail dots — rounded rectangles, rotated to lie along the curve tangent.
+   Light-orange tone with stacked bottom ridge + soft glow for volume. */
+.trail-dot {
+  position: absolute;
+  width: 12px;
+  height: 6px;
+  border-radius: 2px;
+  transform: translate(-50%, -50%) rotate(var(--rot, 0deg));
+  pointer-events: none;
+}
+.trail-dot--solid {
+  background: #FFB870;
+  box-shadow:
+    0 2px 0 0 #E68A3D,
+    0 5px 10px rgba(255, 138, 50, 0.40);
+}
+.trail-dot--dashed {
+  background: #E8C99E;
+  box-shadow:
+    0 2px 0 0 #BC9263,
+    0 5px 10px rgba(200, 150, 90, 0.32);
+  opacity: 0.92;
+}
+
+.islands {
+  position: relative;
+  z-index: 2;
+  list-style: none;
+}
+/* Labels + progress live on the very top layer — never hidden by iso
+   cluster overlap. Inline left/top per item place each exactly. */
+.island-labels {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  list-style: none;
+}
+.island-labels .island-label,
+.island-labels .island-progress {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  top: auto;        /* override .island-label's calc(100% + …) */
+}
+/* Wrap long titles to multiple lines like the old behaviour. */
+.island-labels .island-label {
+  width: auto;
+  max-width: 180px;
+  white-space: normal;
+}
+.island-slot {
+  position: absolute;
+  width: var(--island-size);
+  transform: translateX(-50%);
+}
+/* Last mission — centered horizontally + bigger. */
+.island-slot--last {
+  width: calc(var(--island-size) * 1.62);
+}
+.island-slot--last .island {
+  width: calc(var(--island-size) * 1.62);
+  height: calc(var(--island-size) * 1.62);
+}
+
+/* Side missions — branch off from each main, clearly smaller scale. */
+.island-slot--side {
+  width: calc(var(--island-size) * 0.45);
+}
+.island-slot--side .island {
+  width: calc(var(--island-size) * 0.45);
+  height: calc(var(--island-size) * 0.45);
+}
+.island-slot--side .island-label {
+  display: none;
+}
+/* Empty-side placeholder — small rounded chip with stacked shadow.
+   Selector matches the specificity of the base `.island .island-placeholder`
+   sizing rule so we win on cascade order. */
+.island-slot--side .island-placeholder {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: var(--surface);
+  background-image: none;
+  border: 1px solid var(--border-subtle);
+  box-shadow:
+    0 3px 0 0 var(--surface-muted),
+    0 6px 14px rgba(24, 19, 12, 0.10);
+  color: var(--text-tertiary);
+  font-size: 16px;
+  margin: auto;                        /* centre the chip inside the (larger) .island button */
+}
+/* Side trail — same look, smaller cubes (4×2). */
+.trail-dot--side {
+  width: 4px;
+  height: 2px;
+  border-radius: 1px;
+}
+.trail-dot--side.trail-dot--solid {
+  box-shadow:
+    0 1px 0 0 #E68A3D,
+    0 2px 4px rgba(255, 138, 50, 0.30);
+}
+.trail-dot--side.trail-dot--dashed {
+  box-shadow:
+    0 1px 0 0 #BC9263,
+    0 2px 4px rgba(200, 150, 90, 0.22);
+}
+.island {
+  position: relative;
+  display: block;
+  width: var(--island-size);
+  height: var(--island-size);
+  padding: 0;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  transition: transform 150ms cubic-bezier(.2,.7,.2,1),
+              filter 200ms ease;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+.island img,
+.island .island-placeholder {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+  position: relative;       /* paints above the ::before glow */
+  transition: filter 200ms ease;
+}
+.island-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #FFC58A, #C76A1F 70%);
+  color: var(--text-inverse);
+  font-family: 'Manrope', sans-serif;
+  font-weight: 700;
+  font-size: 28px;
+  box-shadow: 0 14px 24px rgba(176, 80, 8, 0.32);
+}
+
+/* State filters */
+.island.state-done img,
+.island.state-done .island-placeholder {
+  /* Slightly grey, less saturated — read as "уже пройдено". */
+  filter: saturate(0.45) brightness(0.92) contrast(0.95);
+}
+.island.state-current img,
+.island.state-current .island-placeholder {
+  /* Stronger amber bloom — three stacked drop-shadows for soft glow halo. */
+  filter:
+    drop-shadow(0 0 12px rgba(255, 168, 60, 0.45))
+    drop-shadow(0 0  6px rgba(255, 122, 26, 0.30))
+    drop-shadow(0 4px 8px rgba(255, 122, 26, 0.16));
+}
+.island.state-current { transform: scale(1.07); }
+.island.state-available img,
+.island.state-available .island-placeholder {
+  filter: none;
+}
+.island.state-locked img,
+.island.state-locked .island-placeholder {
+  /* Locked — colour preserved but muted; reads dimmer than active but not grey. */
+  filter: grayscale(0.30) brightness(0.78) saturate(0.65) contrast(0.96);
+}
+
+/* Press feedback — must be visible BEFORE navigation */
+.island.pressed { transform: scale(0.92); }
+.island.state-current.pressed { transform: scale(1.0); }
+.island.pressed img,
+.island.pressed .island-placeholder {
+  filter: brightness(1.08) saturate(1.05);
+}
+
+/* Locked shake */
+.island.shake { animation: shake 320ms cubic-bezier(.36,.07,.19,.97); }
+@keyframes shake {
+  10%, 90% { transform: translateX(-2px); }
+  20%, 80% { transform: translateX(3px); }
+  30%, 50%, 70% { transform: translateX(-5px); }
+  40%, 60% { transform: translateX(5px); }
+}
+
+/* Done check badge */
+.island-badge--done {
+  position: absolute;
+  right: -4px;
+  bottom: -2px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #2DB46B;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 10px rgba(45, 180, 107, 0.40), 0 0 0 3px var(--canvas);
+  z-index: 3;
+}
+.island-badge--done svg { width: 18px; height: 18px; }
+
+/* Lock overlay */
+.island-badge--locked {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 3;
+}
+.island-badge--locked svg {
+  width: 38px;
+  height: 38px;
+  color: rgba(255, 255, 255, 0.92);
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.45));
+}
+
+/* Island label — pill bubble under the station (v1 style). */
+.island-label {
+  position: absolute;
+  left: 50%;
+  top: calc(100% + 16px);
+  transform: translate(-50%, -50%);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--text-primary);
+  background: rgba(255, 247, 230, 0.92);
+  padding: 4px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border-subtle);
+  box-shadow: 0 2px 6px rgba(24, 19, 12, 0.08);
+  width: max-content;
+  max-width: 180px;
+  text-align: center;
+  white-space: normal;
+}
+.island-slot--last .island-label {
+  top: calc(100% + 8px);
+}
+
+/* Progress bar under the label — fixed width, fills with amber gradient. */
+.island-progress {
+  position: absolute;
+  left: 50%;
+  top: calc(100% + 65px);
+  transform: translateX(-50%);
+  width: 90px;
+  height: 4px;
+  background: rgba(255, 247, 230, 0.22);
+  border-radius: 999px;
+  overflow: hidden;
+  pointer-events: none;
+}
+.island-slot--last .island-progress {
+  top: calc(100% + 50px);
+}
+.island-progress__fill {
+  height: 100%;
+  width: var(--p, 0%);
+  background: linear-gradient(90deg,
+    var(--amber-light) 0%, var(--amber-mid) 50%, var(--amber-deep) 100%);
+  border-radius: 999px;
+  box-shadow: 0 0 6px rgba(255, 122, 26, 0.45);
+  transition: width 260ms cubic-bezier(.2, .7, .2, 1);
+}
+/* When progress hits 100, the bar is replaced by a small pixel check. */
+.island-progress--done {
+  background: none;
+  border-radius: 0;
+  width: 20px;
+  height: 20px;
+  overflow: visible;
+}
+.island-check {
+  width: 100%;
+  height: 100%;
+  display: block;
+  color: var(--primary-500);
+  filter: drop-shadow(0 0 4px rgba(255, 122, 26, 0.55));
+  image-rendering: pixelated;
+  image-rendering: -webkit-optimize-contrast;
+}
+
+/* Empty state */
+.empty-state {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  padding: 80px 24px;
+  color: var(--text-secondary);
+  min-height: 70vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+.empty-state[hidden] { display: none; }
+.empty-state h2 {
+  font-family: 'Manrope', sans-serif;
+  font-size: 24px;
+  color: var(--text-primary);
+  margin-bottom: 12px;
+}
+.empty-state p { font-size: 15px; }
+.link-to-editor {
+  color: var(--primary-600);
+  font-weight: 600;
+  border-bottom: 1px dashed var(--primary-500);
+  padding: 0;
+}
+
+/* ---------- Editor tab ---------- */
+/* Always uses the light cream palette regardless of map's canvas. */
+.tab-panel--editor {
+  --canvas: #FAF8F3;
+  background: var(--canvas);
+}
+.editor {
+  padding: 20px var(--pad-x) 80px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.dropzone {
+  display: block;
+  border: 2px dashed var(--border-default);
+  border-radius: 16px;
+  padding: 28px 20px;
+  background: var(--surface);
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 160ms ease, background 160ms ease, transform 160ms ease;
+}
+.dropzone:hover { background: var(--surface-subtle); }
+.dropzone.drag-over {
+  border-color: var(--primary-500);
+  background: rgba(255, 122, 26, 0.06);
+  transform: translateY(-1px);
+}
+.dropzone__inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-secondary);
+}
+.dropzone__inner svg { color: var(--primary-500); }
+.dropzone__inner strong {
+  font-size: 16px;
+  color: var(--text-primary);
+  margin-top: 6px;
+}
+.dropzone__inner span { font-size: 13px; }
+
+.mission-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.mission-row {
+  display: grid;
+  grid-template-columns: 28px 56px 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: var(--surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  box-shadow: 0 1px 0 rgba(24, 19, 12, 0.04);
+  transition: background 140ms ease, transform 140ms ease, box-shadow 140ms ease;
+}
+.mission-thumbs {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: center;
+}
+.mission-row.dragging {
+  opacity: 0.4;
+}
+.mission-row.drop-target-above {
+  box-shadow: 0 -3px 0 var(--primary-500), 0 1px 0 rgba(24, 19, 12, 0.04);
+}
+.mission-row.drop-target-below {
+  box-shadow: 0 3px 0 var(--primary-500), 0 1px 0 rgba(24, 19, 12, 0.04);
+}
+
+.mission-drag {
+  cursor: grab;
+  color: var(--text-tertiary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  touch-action: none;
+}
+.mission-drag:active { cursor: grabbing; }
+.mission-drag svg { width: 18px; height: 18px; }
+
+.mission-thumb {
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--surface-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  cursor: pointer;
+  padding: 0;
+}
+.mission-thumb img { width: 100%; height: 100%; object-fit: contain; }
+.mission-thumb__placeholder {
+  font-family: 'Manrope', sans-serif;
+  font-weight: 700;
+  color: var(--primary-600);
+}
+.mission-thumb__hint {
+  font-family: 'Inter', sans-serif;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+.mission-thumb--done:not(.has-img) {
+  background: transparent;
+  border: 1.5px dashed var(--border-default);
+}
+.mission-thumb--done.has-img {
+  filter: saturate(0.45) brightness(0.92) contrast(0.95);
+}
+
+.mission-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+.mission-fields input,
+.mission-fields select {
+  font-size: 14px;
+  padding: 6px 8px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  background: var(--canvas);
+  color: var(--text-primary);
+  width: 100%;
+  min-width: 0;
+}
+.mission-fields input:focus,
+.mission-fields select:focus {
+  outline: 2px solid var(--primary-500);
+  outline-offset: -1px;
+  border-color: transparent;
+}
+.mission-fields__row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.mission-fields__row label {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+.mission-fields__row .lessons-completed,
+.mission-fields__row .lessons-total {
+  width: 56px;
+  text-align: center;
+}
+.mission-fields__row .lessons-sep {
+  color: var(--text-tertiary);
+  font-weight: 600;
+}
+.mission-progress-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.mission-progress-toggle input[type="checkbox"] {
+  width: 14px;
+  height: 14px;
+  margin: 0;
+  accent-color: var(--primary-500);
+  cursor: pointer;
+}
+.mission-progress-value {
+  width: 56px;
+  text-align: center;
+}
+.mission-progress-value:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.mission-delete {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-tertiary);
+  transition: background 140ms ease, color 140ms ease;
+}
+.mission-delete:hover {
+  background: rgba(220, 53, 53, 0.10);
+  color: #C53030;
+}
+.mission-delete svg { width: 16px; height: 16px; }
+
+/* Side-mission sub-rows inside a main row's fields column. */
+.mission-sides {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+  padding-left: 8px;
+  border-left: 2px solid var(--border-subtle);
+}
+.mission-add-side {
+  align-self: flex-start;
+  background: transparent;
+  border: 1px dashed var(--border-default);
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+.mission-add-side:hover { color: var(--primary-600); border-color: var(--primary-500); }
+.side-row {
+  display: grid;
+  grid-template-columns: 40px 1fr auto;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  background: var(--surface-subtle);
+  border-radius: 8px;
+}
+.side-thumbs {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: center;
+}
+.mission-thumb--side {
+  width: 32px;
+  height: 32px;
+}
+.side-fields { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.side-title {
+  font-size: 13px;
+  padding: 4px 6px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  background: var(--canvas);
+  width: 100%;
+  min-width: 0;
+}
+.side-fields__row {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  font-size: 11px;
+}
+.side-fields__row select,
+.side-fields__row input {
+  font-size: 11px;
+  padding: 3px 5px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 5px;
+  background: var(--canvas);
+}
+.side-fields__row .side-lc,
+.side-fields__row .side-lt { width: 38px; text-align: center; }
+.side-delete {
+  width: 28px;
+  height: 28px;
+  border: 0;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  border-radius: 50%;
+}
+.side-delete:hover { background: rgba(220, 53, 53, 0.10); color: #C53030; }
+.side-delete svg { width: 14px; height: 14px; }
+
+/* Toggles for hiding map UI bits while aligning layout. */
+.editor-toggles {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  box-shadow: 0 1px 0 rgba(24, 19, 12, 0.04);
+}
+.toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  user-select: none;
+}
+.toggle input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--primary-500);
+  margin: 0;
+  cursor: pointer;
+}
+
+/* Layout-tuning hide modes — toggled from the editor. */
+body.hide-titles .island-label { display: none; }
+body.hide-connections .trail { display: none; }
+
+.editor-actions {
+  display: flex;
+  justify-content: center;
+  padding-top: 12px;
+}
+.btn-ghost {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  padding: 8px 16px;
+  border-radius: 8px;
+  transition: color 140ms ease, background 140ms ease;
+}
+.btn-ghost:hover {
+  color: #C53030;
+  background: rgba(220, 53, 53, 0.06);
+}
+
+.editor-empty {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text-tertiary);
+  font-size: 14px;
+}
+
+/* ---------- Reduced motion ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .progress__fill,
+  .island,
+  .island-ring__fill,
+  .mission-row,
+  .tab {
+    transition: none;
+  }
+  .island.shake { animation: none; }
+}
+
+/* ---------- Desktop frame: lock the app to 9:16, centre it, white sides ---------- */
+@media (min-width: 460px) {
+  html { background: #FFFFFF; }       /* sides outside the frame */
+  body {
+    width: min(100vw, calc(100dvh * 9 / 16), var(--max-width));
+    margin: 0 auto;
+  }
+}
+

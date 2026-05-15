@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0F0E0C">
+  <title>Mission Map v3 — Prototype</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css?v=v3a">
+</head>
+<body>
+  <div class="identity-band" aria-hidden="true"></div>
+
+  <header class="app-header">
+    <div class="header-row">
+      <button class="plan-pill" type="button" aria-label="Plan switcher">
+        <span class="plan-pill__title" id="planTitle">AI Income Challenge</span>
+        <svg class="plan-pill__chevron" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
+          <path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+      <button class="avatar" type="button" aria-label="Profile">R</button>
+    </div>
+    <div class="progress">
+      <div class="progress__track">
+        <div class="progress__fill" id="progressFill"></div>
+      </div>
+      <span class="progress__counter" id="progressCounter">0/0</span>
+    </div>
+    <nav class="tabs" role="tablist">
+      <button class="tab" role="tab" data-tab="map" aria-selected="true">Map</button>
+      <button class="tab" role="tab" data-tab="editor" aria-selected="false">Editor</button>
+    </nav>
+  </header>
+
+  <!-- ============== MAP TAB ============== -->
+  <section class="tab-panel tab-panel--map" data-panel="map" aria-label="Mission map">
+    <div class="parallax" aria-hidden="true">
+      <div class="sky"></div>
+      <!-- Far layer — bigger, slower (parallax 0.05). -->
+      <div class="cloud-layer cloud-layer--far">
+        <img class="cloud" src="assets/clouds/cloud-1.png" alt="" style="--x: 93%; --y: 2110px; --w: 191px; --o: 0.65; --tx: scaleX(-1) rotate(0deg);">
+        <img class="cloud" src="assets/clouds/cloud-2.png" alt="" style="--x: 29%; --y: 2206px; --w: 170px; --o: 0.53;">
+        <img class="cloud" src="assets/clouds/cloud-1.png" alt="" style="--x: 11%; --y: 176px;  --w: 156px; --o: 0.56; --tx: scale(1) rotate(5deg);">
+        <img class="cloud" src="assets/clouds/cloud-1.png" alt="" style="--x: 42%; --y: 1429px; --w: 176px; --o: 0.60; --tx: scaleX(-1) rotate(3deg);">
+        <img class="cloud" src="assets/clouds/cloud-2.png" alt="" style="--x: 58%; --y: 246px;  --w: 165px; --o: 0.42; --tx: scale(1) rotate(-2deg);">
+        <img class="cloud" src="assets/clouds/cloud-1.png" alt="" style="--x: 59%; --y: 1321px; --w: 190px; --o: 0.44; --tx: scaleX(-1) rotate(0deg);">
+        <img class="cloud" src="assets/clouds/cloud-2.png" alt="" style="--x: 57%; --y: 691px;  --w: 189px; --o: 0.45; --tx: scale(1) rotate(3deg);">
+        <img class="cloud" src="assets/clouds/cloud-1.png" alt="" style="--x: 93%; --y: 862px;  --w: 158px; --o: 0.46; --tx: scaleX(-1) rotate(-4deg);">
+        <img class="cloud" src="assets/clouds/cloud-2.png" alt="" style="--x: 75%; --y: 128px;  --w: 194px; --o: 0.70; --tx: scaleX(-1) rotate(-2deg);">
+        <img class="cloud" src="assets/clouds/cloud-1.png" alt="" style="--x: 12%; --y: 1883px; --w: 154px; --o: 0.64;">
+        <img class="cloud" src="assets/clouds/cloud-2.png" alt="" style="--x: 76%; --y: 1693px; --w: 199px; --o: 0.52; --tx: scaleX(-1) rotate(0deg);">
+        <img class="cloud" src="assets/clouds/cloud-1.png" alt="" style="--x: 62%; --y: 2175px; --w: 200px; --o: 0.50; --tx: scale(1) rotate(-4deg);">
+        <img class="cloud" src="assets/clouds/cloud-2.png" alt="" style="--x: 26%; --y: 329px;  --w: 196px; --o: 0.62;">
+        <img class="cloud" src="assets/clouds/cloud-2.png" alt="" style="--x: 22%; --y: 880px;  --w: 145px; --o: 0.56; --tx: scale(1) rotate(5deg);">
+        <img class="cloud" src="assets/clouds/cloud-1.png" alt="" style="--x: 80%; --y: 991px;  --w: 153px; --o: 0.49; --tx: scaleX(-1) rotate(5deg);">
+        <img class="cloud" src="assets/clouds/cloud-1.png" alt="" style="--x: 41%; --y: 88px;   --w: 139px; --o: 0.61; --tx: scaleX(-1) rotate(0deg);">
+        <img class="cloud" src="assets/clouds/cloud-2.png" alt="" style="--x: 8%;  --y: 1010px; --w: 134px; --o: 0.55; --tx: scaleX(-1) rotate(3deg);">
+        <img class="cloud" src="assets/clouds/cloud-1.png" alt="" style="--x: 4%;  --y: 1477px; --w: 165px; --o: 0.41; --tx: scaleX(-1) rotate(0deg);">
+        <img class="cloud" src="assets/clouds/cloud-1.png" alt="" style="--x: 76%; --y: 1452px; --w: 193px; --o: 0.46;">
+        <img class="cloud" src="assets/clouds/cloud-1.png" alt="" style="--x: 58%; --y: 904px;  --w: 134px; --o: 0.62; --tx: scaleX(-1) rotate(-2deg);">
+        <img class="cloud" src="assets/clouds/cloud-2.png" alt="" style="--x: 71%; --y: 2256px; --w: 177px; --o: 0.50; --tx: scaleX(-1) rotate(-2deg);">
+        <img class="cloud" src="assets/clouds/cloud-1.png" alt="" style="--x: 21%; --y: 1378px; --w: 198px; --o: 0.70; --tx: scale(1) rotate(3deg);">
+        <img class="cloud" src="assets/clouds/cloud-2.png" alt="" style="--x: 5%;  --y: 537px;  --w: 146px; --o: 0.46; --tx: scale(1) rotate(5deg);">
+        <img class="cloud" src="assets/clouds/cloud-2.png" alt="" style="--x: 22%; --y: 607px;  --w: 194px; --o: 0.65; --tx: scale(1) rotate(5deg);">
+        <img class="cloud" src="assets/clouds/cloud-1.png" alt="" style="--x: 41%; --y: 672px;  --w: 195px; --o: 0.55; --tx: scale(1) rotate(5deg);">
+        <img class="cloud" src="assets/clouds/cloud-1.png" alt="" style="--x: 40%; --y: 1917px; --w: 147px; --o: 0.50; --tx: scaleX(-1) rotate(3deg);">
+        <img class="cloud" src="assets/clouds/cloud-2.png" alt="" style="--x: 5%;  --y: 2297px; --w: 133px; --o: 0.54; --tx: scale(1) rotate(5deg);">
+        <img class="cloud" src="assets/clouds/cloud-2.png" alt="" style="--x: 44%; --y: 879px;  --w: 151px; --o: 0.66;">
+        <img class="cloud" src="assets/clouds/cloud-2.png" alt="" style="--x: 94%; --y: 1269px; --w: 135px; --o: 0.43; --tx: scaleX(-1) rotate(-2deg);">
+        <img class="cloud" src="assets/clouds/cloud-1.png" alt="" style="--x: 46%; --y: 2080px; --w: 128px; --o: 0.47; --tx: scale(1) rotate(3deg);">
+        <img class="cloud" src="assets/clouds/cloud-1.png" alt="" style="--x: 58%; --y: 1806px; --w: 160px; --o: 0.60; --tx: scale(1) rotate(5deg);">
+        <img class="cloud" src="assets/clouds/cloud-2.png" alt="" style="--x: 93%; --y: 1764px; --w: 146px; --o: 0.59; --tx: scaleX(-1) rotate(0deg);">
+        <img class="cloud" src="assets/clouds/cloud-2.png" alt="" style="--x: 29%; --y: 1905px; --w: 200px; --o: 0.43;">
+        <img class="cloud" src="assets/clouds/cloud-2.png" alt="" style="--x: 72%; --y: 719px;  --w: 137px; --o: 0.66; --tx: scale(1) rotate(3deg);">
+        <img class="cloud" src="assets/clouds/cloud-2.png" alt="" style="--x: 15%; --y: 2080px; --w: 175px; --o: 0.55; --tx: scale(1) rotate(-5deg);">
+        <img class="cloud" src="assets/clouds/cloud-2.png" alt="" style="--x: 85%; --y: 2280px; --w: 195px; --o: 0.58; --tx: scaleX(-1) rotate(3deg);">
+        <img class="cloud" src="assets/clouds/cloud-2.png" alt="" style="--x: 70%; --y: 2470px; --w: 170px; --o: 0.50; --tx: scale(1) rotate(3deg);">
+      </div>
+      <!-- Mid layer — smaller, faster (parallax 0.30). -->
+      <div class="cloud-layer cloud-layer--mid">
+        <img class="cloud" src="assets/clouds/cloud-1.png" alt="" style="--x: 59%; --y: 266px;  --w: 102px; --o: 0.56; --tx: scale(1) rotate(3deg);">
+        <img class="cloud" src="assets/clouds/cloud-2.png" alt="" style="--x: 85%; --y: 1273px; --w: 102px; --o: 0.64; --tx: scaleX(-1) rotate(0deg);">
+        <img class="cloud" src="assets/clouds/cloud-1.png" alt="" style="--x: 33%; --y: 1151px; --w: 127px; --o: 0.43; --tx: scaleX(-1) rotate(-4deg);">
+        <img class="cloud" src="assets/clouds/cloud-1.png" alt="" style="--x: 40%; --y: 438px;  --w: 124px; --o: 0.50; --tx: scale(1) rotate(5deg);">
+        <img class="cloud" src="assets/clouds/cloud-2.png" alt="" style="--x: 67%; --y: 854px;  --w: 114px; --o: 0.53;">
+        <img class="cloud" src="assets/clouds/cloud-1.png" alt="" style="--x: 62%; --y: 1516px; --w: 103px; --o: 0.46; --tx: scale(1) rotate(-2deg);">
+        <img class="cloud" src="assets/clouds/cloud-2.png" alt="" style="--x: 65%; --y: 1945px; --w: 79px;  --o: 0.60; --tx: scaleX(-1) rotate(-4deg);">
+        <img class="cloud" src="assets/clouds/cloud-1.png" alt="" style="--x: 93%; --y: 925px;  --w: 110px; --o: 0.41; --tx: scale(1) rotate(-2deg);">
+        <img class="cloud" src="assets/clouds/cloud-1.png" alt="" style="--x: 66%; --y: 524px;  --w: 120px; --o: 0.54; --tx: scaleX(-1) rotate(5deg);">
+        <img class="cloud" src="assets/clouds/cloud-2.png" alt="" style="--x: 20%; --y: 177px;  --w: 95px;  --o: 0.47; --tx: scaleX(-1) rotate(-4deg);">
+        <img class="cloud" src="assets/clouds/cloud-2.png" alt="" style="--x: 14%; --y: 544px;  --w: 83px;  --o: 0.67;">
+        <img class="cloud" src="assets/clouds/cloud-2.png" alt="" style="--x: 61%; --y: 2287px; --w: 74px;  --o: 0.48; --tx: scale(1) rotate(-4deg);">
+        <img class="cloud" src="assets/clouds/cloud-2.png" alt="" style="--x: 14%; --y: 1298px; --w: 76px;  --o: 0.43; --tx: scaleX(-1) rotate(-2deg);">
+        <img class="cloud" src="assets/clouds/cloud-1.png" alt="" style="--x: 6%;  --y: 2118px; --w: 103px; --o: 0.45; --tx: scale(1) rotate(-4deg);">
+        <img class="cloud" src="assets/clouds/cloud-1.png" alt="" style="--x: 34%; --y: 861px;  --w: 126px; --o: 0.59; --tx: scale(1) rotate(-2deg);">
+        <img class="cloud" src="assets/clouds/cloud-2.png" alt="" style="--x: 82%; --y: 544px;  --w: 106px; --o: 0.69; --tx: scaleX(-1) rotate(0deg);">
+        <img class="cloud" src="assets/clouds/cloud-1.png" alt="" style="--x: 9%;  --y: 748px;  --w: 77px;  --o: 0.53; --tx: scaleX(-1) rotate(0deg);">
+        <img class="cloud" src="assets/clouds/cloud-1.png" alt="" style="--x: 31%; --y: 2136px; --w: 98px;  --o: 0.40; --tx: scaleX(-1) rotate(0deg);">
+        <img class="cloud" src="assets/clouds/cloud-1.png" alt="" style="--x: 85%; --y: 1439px; --w: 116px; --o: 0.63; --tx: scaleX(-1) rotate(3deg);">
+        <img class="cloud" src="assets/clouds/cloud-2.png" alt="" style="--x: 93%; --y: 2269px; --w: 115px; --o: 0.42; --tx: scaleX(-1) rotate(-4deg);">
+        <img class="cloud" src="assets/clouds/cloud-1.png" alt="" style="--x: 31%; --y: 111px;  --w: 115px; --o: 0.44; --tx: scaleX(-1) rotate(0deg);">
+        <img class="cloud" src="assets/clouds/cloud-2.png" alt="" style="--x: 44%; --y: 1856px; --w: 95px;  --o: 0.63; --tx: scaleX(-1) rotate(-2deg);">
+        <img class="cloud" src="assets/clouds/cloud-2.png" alt="" style="--x: 15%; --y: 1896px; --w: 90px;  --o: 0.52; --tx: scale(1) rotate(-4deg);">
+        <img class="cloud" src="assets/clouds/cloud-2.png" alt="" style="--x: 37%; --y: 1582px; --w: 75px;  --o: 0.50; --tx: scaleX(-1) rotate(5deg);">
+        <img class="cloud" src="assets/clouds/cloud-2.png" alt="" style="--x: 9%;  --y: 1655px; --w: 105px; --o: 0.59; --tx: scale(1) rotate(3deg);">
+        <img class="cloud" src="assets/clouds/cloud-2.png" alt="" style="--x: 92%; --y: 60px;   --w: 129px; --o: 0.60; --tx: scaleX(-1) rotate(-2deg);">
+        <img class="cloud" src="assets/clouds/cloud-1.png" alt="" style="--x: 59%; --y: 1228px; --w: 130px; --o: 0.46; --tx: scaleX(-1) rotate(0deg);">
+        <img class="cloud" src="assets/clouds/cloud-1.png" alt="" style="--x: 90%; --y: 1913px; --w: 92px;  --o: 0.67; --tx: scale(1) rotate(-2deg);">
+        <img class="cloud" src="assets/clouds/cloud-1.png" alt="" style="--x: 10%; --y: 2150px; --w: 110px; --o: 0.50; --tx: scale(1) rotate(0deg);">
+        <img class="cloud" src="assets/clouds/cloud-1.png" alt="" style="--x: 45%; --y: 2350px; --w: 95px;  --o: 0.52; --tx: scaleX(-1) rotate(3deg);">
+        <img class="cloud" src="assets/clouds/cloud-1.png" alt="" style="--x: 10%; --y: 2540px; --w: 115px; --o: 0.48; --tx: scale(1) rotate(-5deg);">
+      </div>
+    </div>
+
+    <div class="map" id="map">
+      <div class="trail" id="trail" aria-hidden="true"></div>
+      <ol class="islands" id="islands"></ol>
+      <!-- Labels + progress bars live above every island so cluster
+           overlap never hides them. -->
+      <ol class="island-labels" id="islandLabels" aria-hidden="true"></ol>
+    </div>
+
+    <div class="empty-state" id="emptyState" hidden>
+      <h2>No islands yet</h2>
+      <p>Open the <button type="button" class="link-to-editor" data-go="editor">Editor</button> tab and upload your first island PNG.</p>
+    </div>
+  </section>
+
+  <!-- ============== EDITOR TAB ============== -->
+  <section class="tab-panel tab-panel--editor" data-panel="editor" hidden aria-label="Mission editor">
+    <div class="editor">
+      <label class="dropzone" id="dropzone">
+        <input type="file" id="fileInput" accept="image/png,image/jpeg,image/webp" multiple hidden>
+        <div class="dropzone__inner">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M12 4v12m0 0l-5-5m5 5l5-5M5 20h14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <strong>Drop island PNGs here</strong>
+          <span>or click to choose files</span>
+        </div>
+      </label>
+
+      <div class="editor-toggles">
+        <label class="toggle">
+          <input type="checkbox" id="toggleHideTitles">
+          <span>Hide Titles</span>
+        </label>
+        <label class="toggle">
+          <input type="checkbox" id="toggleHideConnections">
+          <span>Hide Connections</span>
+        </label>
+      </div>
+
+      <ol class="mission-list" id="missionList"></ol>
+
+      <div class="editor-actions">
+        <button class="btn-ghost" id="exportJson" type="button">Export JSON</button>
+        <button class="btn-ghost" id="resetAll" type="button">Reset all islands</button>
+      </div>
+    </div>
+  </section>
+
+  <script src="sample-data.js?v=v3a"></script>
+  <script src="app.js?v=v3a"></script>
+</body>
+</html>
