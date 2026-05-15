@@ -289,32 +289,39 @@
   // as last-interacted, regardless of which other missions are done.
   function isLockedIndex(i) { return i === missions.length - 1; }
 
-  // Resolves which mission carries the transient "last interacted" flag
-  // based on session storage + persistent state. See design notes:
-  //   1) sessionStorage.clickedId, if its mission is not completed and not locked.
-  //   2) else first not-completed AFTER sessionStorage.lastCompletedId.
-  //   3) else first not-completed from start (covers the "fresh session"
-  //      and "first time user opens the map" cases).
+  // Resolves which IN-PROGRESS mission carries the "last interacted" focus
+  // (the glow + levitation accent). A station only qualifies once the user
+  // has completed at least one lesson there (progress > 0). Clicking and
+  // returning without progress no longer changes state.
+  //
+  //   1) sessionStorage.clickedId, if its mission is in-progress (0 < p < 100).
+  //   2) else first in-progress AFTER sessionStorage.lastCompletedId.
+  //   3) else first in-progress from start.
+  //   4) else null — nothing glows.
   function computeLastInteractedId() {
     if (!missions.length) return null;
-    const isCompleted = (m) => m.state === 'completed' || (Number(m.progress) || 0) >= 100;
-    const isCandidate = (m, idx) => !isCompleted(m) && !isLockedIndex(idx);
+    const isInProgress = (m, idx) => {
+      if (isLockedIndex(idx)) return false;
+      if (m.state === 'completed') return false;
+      const p = Number(m.progress) || 0;
+      return p > 0 && p < 100;
+    };
     const clickedId = sessionGet('clickedId');
     if (clickedId) {
       const idx = missions.findIndex(x => x.id === clickedId);
-      if (idx >= 0 && isCandidate(missions[idx], idx)) return clickedId;
+      if (idx >= 0 && isInProgress(missions[idx], idx)) return clickedId;
     }
     const lastCompletedId = sessionGet('lastCompletedId');
     if (lastCompletedId) {
       const idx = missions.findIndex(x => x.id === lastCompletedId);
       if (idx >= 0) {
         for (let j = idx + 1; j < missions.length; j++) {
-          if (isCandidate(missions[j], j)) return missions[j].id;
+          if (isInProgress(missions[j], j)) return missions[j].id;
         }
       }
     }
     for (let i = 0; i < missions.length; i++) {
-      if (isCandidate(missions[i], i)) return missions[i].id;
+      if (isInProgress(missions[i], i)) return missions[i].id;
     }
     return null;
   }
@@ -397,15 +404,16 @@
       const locked          = isLockedIndex(i);
       const completed       = !locked && (m.state === 'completed' || progressNum >= 100);
       const inProgress      = !locked && !completed && progressNum > 0;
-      const isLastInter     = !locked && !completed && m.id === lastInteractedId;
-      const useLiveArt      = !locked && (completed || inProgress || isLastInter);
+      // Glow + levitation only when the station is the "current focus" AND
+      // actually in progress — clicks without lesson progress don't qualify.
+      const isLastInter     = inProgress && m.id === lastInteractedId;
+      const useLiveArt      = !locked && (completed || inProgress);
       const showProgressBar = inProgress;
 
       let baseClass;
       if (locked)          baseClass = 'is-locked';
       else if (completed)  baseClass = 'is-completed';
       else if (inProgress) baseClass = 'is-in-progress';
-      else if (isLastInter) baseClass = 'is-last-interacted-fresh';
       else                  baseClass = 'is-not-started';
       const lastInterClass = isLastInter ? ' is-last-interacted' : '';
 
@@ -651,10 +659,11 @@
   }
 
   // Derive the dropdown's displayed state from data + session flag.
+  // "Last interacted" now implies in-progress (progress > 0 and the focus).
   function deriveEditorState(m, lastInteractedId) {
     const p = Number(m.progress) || 0;
     if (m.state === 'completed' || p >= 100) return 'completed';
-    if (m.id === lastInteractedId && p === 0) return 'last-interacted';
+    if (p > 0 && p < 100 && m.id === lastInteractedId) return 'last-interacted';
     if (p > 0 && p < 100) return 'in-progress';
     return 'not-started';
   }
@@ -783,9 +792,13 @@
           if (sessionGet('clickedId') === id) sessionSet('clickedId', null);
           if (sessionGet('lastCompletedId') === id) sessionSet('lastCompletedId', null);
         } else if (choice === 'last-interacted') {
-          // Reset progress so render derives "last-interacted-fresh" (silhouette → live, no bar).
+          // Glow + levitation requires progress > 0 in the new model. If
+          // there's no existing progress in the in-progress band, seed with
+          // 10% so the visual matches the chosen state.
+          const p = Number(m.progress) || 0;
           m.state = 'not-started';
-          m.progress = 0;
+          m.progress = (p > 0 && p < 100) ? p : 10;
+          m.progressEnabled = true;
           sessionSet('clickedId', id);
           if (sessionGet('lastCompletedId') === id) sessionSet('lastCompletedId', null);
         } else if (choice === 'in-progress') {
