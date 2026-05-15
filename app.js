@@ -284,31 +284,37 @@
   const mapEl = document.getElementById('map');
   const emptyStateEl = document.getElementById('emptyState');
 
+  // The final mission in the plan is always locked — it represents the
+  // long-term goal, not a regular click target. It must never be surfaced
+  // as last-interacted, regardless of which other missions are done.
+  function isLockedIndex(i) { return i === missions.length - 1; }
+
   // Resolves which mission carries the transient "last interacted" flag
   // based on session storage + persistent state. See design notes:
-  //   1) sessionStorage.clickedId, if its mission is not completed.
+  //   1) sessionStorage.clickedId, if its mission is not completed and not locked.
   //   2) else first not-completed AFTER sessionStorage.lastCompletedId.
   //   3) else first not-completed from start (covers the "fresh session"
   //      and "first time user opens the map" cases).
   function computeLastInteractedId() {
     if (!missions.length) return null;
     const isCompleted = (m) => m.state === 'completed' || (Number(m.progress) || 0) >= 100;
+    const isCandidate = (m, idx) => !isCompleted(m) && !isLockedIndex(idx);
     const clickedId = sessionGet('clickedId');
     if (clickedId) {
-      const m = missions.find(x => x.id === clickedId);
-      if (m && !isCompleted(m)) return clickedId;
+      const idx = missions.findIndex(x => x.id === clickedId);
+      if (idx >= 0 && isCandidate(missions[idx], idx)) return clickedId;
     }
     const lastCompletedId = sessionGet('lastCompletedId');
     if (lastCompletedId) {
       const idx = missions.findIndex(x => x.id === lastCompletedId);
       if (idx >= 0) {
         for (let j = idx + 1; j < missions.length; j++) {
-          if (!isCompleted(missions[j])) return missions[j].id;
+          if (isCandidate(missions[j], j)) return missions[j].id;
         }
       }
     }
-    for (const m of missions) {
-      if (!isCompleted(m)) return m.id;
+    for (let i = 0; i < missions.length; i++) {
+      if (isCandidate(missions[i], i)) return missions[i].id;
     }
     return null;
   }
@@ -388,14 +394,16 @@
       const isLast = i === count - 1;
 
       const progressNum     = Math.max(0, Math.min(100, Number(m.progress) || 0));
-      const completed       = m.state === 'completed' || progressNum >= 100;
-      const inProgress      = !completed && progressNum > 0;
-      const isLastInter     = !completed && m.id === lastInteractedId;
-      const useLiveArt      = completed || inProgress || isLastInter;
+      const locked          = isLockedIndex(i);
+      const completed       = !locked && (m.state === 'completed' || progressNum >= 100);
+      const inProgress      = !locked && !completed && progressNum > 0;
+      const isLastInter     = !locked && !completed && m.id === lastInteractedId;
+      const useLiveArt      = !locked && (completed || inProgress || isLastInter);
       const showProgressBar = inProgress;
 
       let baseClass;
-      if (completed)       baseClass = 'is-completed';
+      if (locked)          baseClass = 'is-locked';
+      else if (completed)  baseClass = 'is-completed';
       else if (inProgress) baseClass = 'is-in-progress';
       else if (isLastInter) baseClass = 'is-last-interacted-fresh';
       else                  baseClass = 'is-not-started';
@@ -408,6 +416,14 @@
         ? `<img src="${imgSrc}" alt="${escapeHtml(m.title || 'Mission ' + (i + 1))}" draggable="false">`
         : `<div class="island-placeholder">${i + 1}</div>`;
 
+      const lockBadge = locked
+        ? `<span class="island-badge--locked" aria-hidden="true">
+             <svg viewBox="0 0 24 24" fill="currentColor">
+               <path d="M6 10V8a6 6 0 0 1 12 0v2h1a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h1zm2 0h8V8a4 4 0 0 0-8 0v2z"/>
+             </svg>
+           </span>`
+        : '';
+
       const slotCls = isLast ? 'island-slot island-slot--last' : 'island-slot';
       html += `
         <li class="${slotCls}" style="left:${x}%; top:${y}px;">
@@ -416,6 +432,7 @@
                   data-state="${baseClass.replace('is-', '')}"
                   aria-label="${escapeHtml(m.title || 'Mission ' + (i + 1))}">
             ${visual}
+            ${lockBadge}
           </button>
         </li>
       `;
@@ -530,8 +547,16 @@
       const finish = () => {
         const id = el.dataset.id;
         const index = Number(el.dataset.index);
+        const state = el.dataset.state;
         pressTimer = null;
         el.classList.remove('pressed');
+        // The final mission is locked — no navigation, just shake to signal.
+        if (state === 'locked') {
+          el.classList.add('shake');
+          setTimeout(() => el.classList.remove('shake'), 360);
+          console.log('[mission-map] locked island tapped:', { id, index });
+          return;
+        }
         // Mark this mission as the in-session "last interacted" target before
         // navigating away. On return (back from mission page) the algorithm
         // honours this until the mission flips to completed.

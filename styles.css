@@ -266,16 +266,16 @@ input { font: inherit; color: inherit; }
 /* Trail — warm-grey dashed line built from short rotated segments. */
 .trail-dot {
   position: absolute;
-  width: 10px;
-  height: 3px;
-  background: #C8C0AE;
-  border-radius: 1.5px;
+  width: 11px;
+  height: 3.3px;
+  background: #9B8F76;
+  border-radius: 1.65px;
   transform: translate(-50%, -50%) rotate(var(--rot, 0deg));
   pointer-events: none;
 }
 .trail-dot--solid,
 .trail-dot--dashed {
-  background: #C8C0AE;
+  background: #9B8F76;
   box-shadow: none;
   opacity: 1;
 }
@@ -412,12 +412,21 @@ input { font: inherit; color: inherit; }
 }
 
 /* State filters — new 4-state model.
-   Persistent states (is-not-started, is-in-progress, is-completed) keep the
-   art clean; the silhouette/live distinction is decided in JS by swapping
-   image SRC, not by filtering. The .is-last-interacted modifier overlays
-   glow + levitation on top of any persistent state. */
+   Persistent states (is-in-progress, is-completed) keep the art clean;
+   silhouette/live distinction is decided in JS by swapping image SRC, not
+   by filtering. Not-started layers a grey desaturate on top of the silhouette
+   so the station reads as "dim / dormant". The .is-last-interacted modifier
+   overlays glow + levitation on top of any persistent state. */
 .island.is-not-started img,
-.island.is-not-started .island-placeholder,
+.island.is-not-started .island-placeholder {
+  filter: grayscale(0.78) brightness(0.82) saturate(0.55) contrast(0.92);
+}
+/* Locked — the final mission of the plan. Dimmed colour stays warm so it
+   doesn't read as broken, but it's clearly inactive. */
+.island.is-locked img,
+.island.is-locked .island-placeholder {
+  filter: grayscale(0.42) brightness(0.78) saturate(0.62) contrast(0.95);
+}
 .island.is-in-progress img,
 .island.is-in-progress .island-placeholder,
 .island.is-completed img,
@@ -427,20 +436,33 @@ input { font: inherit; color: inherit; }
   filter: none;
 }
 
-/* Last-interacted — amber glow ≈30% larger than the old current-state bloom,
-   plus a slow vertical levitation. Applied independently of the persistent
-   state, so an in-progress + last-interacted mission gets both the bar and
-   the glow/levitation. */
-.island.is-last-interacted img,
-.island.is-last-interacted .island-placeholder {
-  filter:
-    drop-shadow(0 0 16px rgba(255, 168, 60, 0.58))
-    drop-shadow(0 0  9px rgba(255, 122, 26, 0.40))
-    drop-shadow(0 6px 11px rgba(255, 122, 26, 0.22));
-}
+/* Last-interacted — soft amber halo painted BEHIND the station via a radial
+   ::before, plus a faint drop-shadow on the art itself for edge bloom. The
+   levitation runs ~20% faster than the original 2.6s cadence. */
 .island.is-last-interacted {
   transform: scale(1.07);
-  animation: island-levitate 2600ms ease-in-out infinite alternate;
+  animation: island-levitate 2080ms ease-in-out infinite alternate;
+  overflow: visible;
+}
+.island.is-last-interacted::before {
+  content: '';
+  position: absolute;
+  inset: -28%;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 50% 55%,
+      rgba(255, 178, 78, 0.78) 0%,
+      rgba(255, 132, 28, 0.42) 32%,
+      rgba(255, 122, 26, 0.16) 58%,
+      transparent 72%);
+  pointer-events: none;
+  z-index: 0;
+}
+.island.is-last-interacted img,
+.island.is-last-interacted .island-placeholder {
+  position: relative;
+  z-index: 1;
+  filter: drop-shadow(0 4px 10px rgba(255, 122, 26, 0.32));
 }
 
 @keyframes island-levitate {
@@ -449,6 +471,7 @@ input { font: inherit; color: inherit; }
 }
 @media (prefers-reduced-motion: reduce) {
   .island.is-last-interacted { animation: none; }
+  .island.is-last-interacted::before { opacity: 0.6; }
 }
 
 /* Press feedback — must be visible BEFORE navigation */
