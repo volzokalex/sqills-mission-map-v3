@@ -263,28 +263,21 @@ input { font: inherit; color: inherit; }
   z-index: 1;
   pointer-events: none;
 }
-/* Trail dots — rounded rectangles, rotated to lie along the curve tangent.
-   Light-orange tone with stacked bottom ridge + soft glow for volume. */
+/* Trail — thin dark dashed line built from short rotated segments. */
 .trail-dot {
   position: absolute;
-  width: 12px;
-  height: 6px;
-  border-radius: 2px;
+  width: 8px;
+  height: 1.5px;
+  background: rgba(24, 19, 12, 0.50);
+  border-radius: 1px;
   transform: translate(-50%, -50%) rotate(var(--rot, 0deg));
   pointer-events: none;
 }
-.trail-dot--solid {
-  background: #FFB870;
-  box-shadow:
-    0 2px 0 0 #E68A3D,
-    0 5px 10px rgba(255, 138, 50, 0.40);
-}
+.trail-dot--solid,
 .trail-dot--dashed {
-  background: #E8C99E;
-  box-shadow:
-    0 2px 0 0 #BC9263,
-    0 5px 10px rgba(200, 150, 90, 0.32);
-  opacity: 0.92;
+  background: rgba(24, 19, 12, 0.50);
+  box-shadow: none;
+  opacity: 1;
 }
 
 .islands {
@@ -373,18 +366,8 @@ input { font: inherit; color: inherit; }
 /* Side trail — same look, smaller cubes (4×2). */
 .trail-dot--side {
   width: 4px;
-  height: 2px;
-  border-radius: 1px;
-}
-.trail-dot--side.trail-dot--solid {
-  box-shadow:
-    0 1px 0 0 #E68A3D,
-    0 2px 4px rgba(255, 138, 50, 0.30);
-}
-.trail-dot--side.trail-dot--dashed {
-  box-shadow:
-    0 1px 0 0 #BC9263,
-    0 2px 4px rgba(200, 150, 90, 0.22);
+  height: 1px;
+  border-radius: 0.5px;
 }
 .island {
   position: relative;

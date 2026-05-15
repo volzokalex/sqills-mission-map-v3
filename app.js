@@ -1015,7 +1015,7 @@
     far: document.querySelector('.cloud-layer--far'),
     mid: document.querySelector('.cloud-layer--mid')
   };
-  const speeds = { far: 0.05, mid: 0.30 };
+  const speeds = { far: 0.025, mid: 0.15 };
 
   let parallaxFrame = null;
   const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
