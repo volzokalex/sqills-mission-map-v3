@@ -279,14 +279,21 @@ input { font: inherit; color: inherit; }
   box-shadow: none;
   opacity: 1;
 }
-/* Gold trail — outgoing segments from a completed mission. Each segment's
-   dots stretch wide enough to overlap with their neighbours along the
-   bezier, so the chain reads as a continuous solid line. No glow. */
-.trail-dot--gold {
-  background: #F5A623;
-  box-shadow: none;
-  width: 24px;
-  opacity: 1;
+/* Gold trail — outgoing segments from a completed mission. Rendered as a
+   single smooth SVG bezier (one path per segment), not stacked rectangles,
+   so the curve has no polyline kinks at the joints. */
+.trail-svg {
+  position: absolute;
+  left: 0;
+  top: 0;
+  pointer-events: none;
+  overflow: visible;
+}
+.trail-svg path {
+  fill: none;
+  stroke: #F5A623;
+  stroke-width: 5;
+  stroke-linecap: round;
 }
 
 .islands {

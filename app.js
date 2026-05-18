@@ -359,17 +359,17 @@
     const lastInteractedId = computeLastInteractedId();
     const isCompleted = (m) => m.state === 'completed' || (Number(m.progress) || 0) >= 100;
 
-    // Trail dots — divs sampled along each pair's quadratic bezier. Each dot
-    // gets a --rot var so its long axis aligns with the local tangent (the
-    // "short faces" point at the next dot along the curve, like train ties).
-    // Segments whose SOURCE mission is completed turn gold; everything else
-    // stays warm-grey dashed.
+    // Trail rendering. Two visual variants per segment:
+    //  - Completed source mission → smooth amber SVG bezier path (single curve, no joints).
+    //  - Otherwise → warm-grey dashed line built from short rotated rectangles.
     const DOTS_PER_SEGMENT = 14;
     const mapWidthPx = mapEl.getBoundingClientRect().width || 430;
+    const mapHeightPx = mapHeight(count);
     let trailHtml = '';
+    let svgPaths = '';
     for (let i = 0; i < count - 1; i++) {
       const a = missions[i];
-      const cls = isCompleted(a) ? 'trail-dot--gold' : 'trail-dot--dashed';
+      const isLit = isCompleted(a);
       const x1 = islandXPct(i, count);
       const y1 = islandY(i) + ISLAND_SIZE / 2;
       const x2 = islandXPct(i + 1, count);
@@ -385,21 +385,34 @@
       const off = 22 * (i % 2 === 0 ? 1 : -1);
       const cx = mx + px * off;
       const cy = my + py * off;
-      for (let k = 1; k <= DOTS_PER_SEGMENT; k++) {
-        const t = k / (DOTS_PER_SEGMENT + 1);
-        const u = 1 - t;
-        const x = u * u * x1 + 2 * u * t * cx + t * t * x2;
-        const y = u * u * y1 + 2 * u * t * cy + t * t * y2;
-        // Tangent (derivative of quadratic bezier). dx is in percent units,
-        // dy in px — convert dx to px so the rotation matches the rendered
-        // geometry.
-        const dxPctT = 2 * (u * (cx - x1) + t * (x2 - cx));
-        const dyPxT  = 2 * (u * (cy - y1) + t * (y2 - cy));
-        const dxPxT  = dxPctT * mapWidthPx / 100;
-        const rot = Math.atan2(dyPxT, dxPxT) * 180 / Math.PI;
-        trailHtml += `<div class="trail-dot ${cls}" style="left:${x.toFixed(2)}%;top:${y.toFixed(0)}px;--rot:${rot.toFixed(1)}deg"></div>`;
+      if (isLit) {
+        // One quadratic bezier in pixel coords matches the dot-sampled curve
+        // exactly but renders as a single smooth stroke.
+        const x1px = x1 * mapWidthPx / 100;
+        const cxpx = cx * mapWidthPx / 100;
+        const x2px = x2 * mapWidthPx / 100;
+        svgPaths +=
+          `<path d="M${x1px.toFixed(1)},${y1.toFixed(1)} ` +
+          `Q${cxpx.toFixed(1)},${cy.toFixed(1)} ` +
+          `${x2px.toFixed(1)},${y2.toFixed(1)}"/>`;
+      } else {
+        const cls = 'trail-dot--dashed';
+        for (let k = 1; k <= DOTS_PER_SEGMENT; k++) {
+          const t = k / (DOTS_PER_SEGMENT + 1);
+          const u = 1 - t;
+          const x = u * u * x1 + 2 * u * t * cx + t * t * x2;
+          const y = u * u * y1 + 2 * u * t * cy + t * t * y2;
+          const dxPctT = 2 * (u * (cx - x1) + t * (x2 - cx));
+          const dyPxT  = 2 * (u * (cy - y1) + t * (y2 - cy));
+          const dxPxT  = dxPctT * mapWidthPx / 100;
+          const rot = Math.atan2(dyPxT, dxPxT) * 180 / Math.PI;
+          trailHtml += `<div class="trail-dot ${cls}" style="left:${x.toFixed(2)}%;top:${y.toFixed(0)}px;--rot:${rot.toFixed(1)}deg"></div>`;
+        }
       }
     }
+    const svgHtml = svgPaths
+      ? `<svg class="trail-svg" width="${mapWidthPx.toFixed(0)}" height="${mapHeightPx}" xmlns="http://www.w3.org/2000/svg">${svgPaths}</svg>`
+      : '';
     // (Trail innerHTML is written AFTER side-trails are also appended below.)
 
     // Islands — derive the display state per mission from progress + the
@@ -555,7 +568,7 @@
     });
     islandsEl.innerHTML = html;
     if (islandLabelsEl) islandLabelsEl.innerHTML = labelsHtml;
-    trailEl.innerHTML = trailHtml;
+    trailEl.innerHTML = svgHtml + trailHtml;
     attachIslandHandlers();
   }
 
